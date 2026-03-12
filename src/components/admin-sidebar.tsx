@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -11,14 +11,18 @@ import {
   ChevronLeft,
   Menu,
   Settings,
+  TicketPlus,
+  Home,
+  Image, // Importamos el icono para Galería
 } from 'lucide-react';
 import { useState } from 'react';
 
 const menuItems = [
+  { title: 'Volver a Inicio', href: '/', icon: Home },
   { title: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-  { title: 'Usuarios', href: '/admin/users', icon: Users },
+  { title: 'Gestión Invitados', href: '/admin/invitados', icon: TicketPlus },
+  { title: 'Galería', href: '/admin/galeria', icon: Image }, // Nuevo botón añadido
   { title: 'Asistencia', href: '/admin/asistencia', icon: CalendarCheck },
-  // Corregido: href apunta a /admin/count para coincidir con tu carpeta
   { title: 'Configuración', href: '/admin/count', icon: Settings }, 
 ];
 
@@ -58,12 +62,10 @@ export function AdminSidebar() {
           <div className="flex items-center justify-between p-6 border-b border-gray-50 dark:border-slate-900">
             {!collapsed && (
               <div className="flex items-center space-x-2">
+                {/* Logo minimalista */}
                 <div className="w-8 h-8 bg-zinc-900 dark:bg-white rounded-full flex items-center justify-center">
                   <div className="w-3 h-3 bg-white dark:bg-black rounded-full" />
                 </div>
-                <span className="font-serif italic font-bold text-xl dark:text-white leading-none">
-                  Luz Jazmín
-                </span>
               </div>
             )}
             <button
@@ -116,7 +118,7 @@ export function AdminSidebar() {
             })}
           </nav>
 
-          {/* Footer opcional para cerrar sesión */}
+          {/* Footer */}
           <div className="p-4 border-t border-gray-50 dark:border-slate-900">
             <button
               className={cn(
