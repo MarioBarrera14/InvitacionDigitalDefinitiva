@@ -19,10 +19,9 @@ import { useState } from 'react';
 
 const menuItems = [
   { title: 'Volver a Inicio', href: '/', icon: Home },
-  { title: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { title: 'Muro', href: '/admin', icon: LayoutDashboard },
   { title: 'Gestión Invitados', href: '/admin/invitados', icon: TicketPlus },
   { title: 'Galería', href: '/admin/galeria', icon: Image }, // Nuevo botón añadido
-  { title: 'Asistencia', href: '/admin/asistencia', icon: CalendarCheck },
   { title: 'Configuración', href: '/admin/count', icon: Settings }, 
 ];
 

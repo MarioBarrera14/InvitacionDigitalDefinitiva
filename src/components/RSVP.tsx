@@ -1,41 +1,57 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { eventConfig } from "../data/event-config";
-import { CalendarCheck, X, Loader2, KeyRound, CheckCircle2 } from "lucide-react";
-import { useEffect, useState, useMemo } from "react";
+import { CalendarCheck, X, Loader2, KeyRound, CheckCircle2, AlertCircle, PartyPopper, Heart, MessageSquareHeart } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function RSVP() {
   const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isValidated, setIsValidated] = useState(false); // Nuevo estado para el código
-  const [familyCode, setFamilyCode] = useState(""); // Input del código
+  const [isValidated, setIsValidated] = useState(false);
+  const [alreadyResponded, setAlreadyResponded] = useState(false);
+  const [familyCode, setFamilyCode] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [guestInfo, setGuestInfo] = useState<any>(null);
   
   const [formData, setFormData] = useState({
     name: "",
-    attendance: "",
+    attendance: "", 
     dietary: [] as string[],
+    message: "",
   });
 
-  const { personal } = eventConfig;
-  const [displayName, setDisplayName] = useState(personal.nombre);
-
-  // Simulación de validación (Aquí podrías conectar con tu API/Base de datos)
   const handleValidateCode = async () => {
     if (!familyCode) return;
     setIsSubmitting(true);
+    setErrorMessage("");
     
-    // Simulamos una pequeña carga de validación
-    setTimeout(() => {
-      // Aquí podrías validar contra la DB. Por ahora aceptamos cualquier código de 7 caracteres (como los del dashboard)
-      if (familyCode.length >= 4) {
+    try {
+      const response = await fetch("/api/guests");
+      const invitados = await response.json();
+      
+      const invitadoEncontrado = invitados.find(
+        (inv: any) => inv.codigo === familyCode.toUpperCase().trim()
+      );
+
+      if (invitadoEncontrado) {
+        if (invitadoEncontrado.status !== "PENDING" && invitadoEncontrado.status !== null) {
+          setAlreadyResponded(true);
+          setIsValidated(true);
+          return;
+        }
+
+        setGuestInfo(invitadoEncontrado);
         setIsValidated(true);
+        setFormData(prev => ({ ...prev, name: invitadoEncontrado.apellido }));
       } else {
-        alert("Código no reconocido. Por favor, revisa tu invitación.");
+        setErrorMessage("Código no reconocido. Revisa tu invitación física.");
       }
+    } catch (error) {
+      setErrorMessage("Error de conexión. Inténtalo más tarde.");
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const handleSubmit = async () => {
@@ -46,28 +62,29 @@ export function RSVP() {
 
     setIsSubmitting(true);
     try {
-      const isConfirmed = formData.attendance === "¡SÍ, OBVIO! 🤩";
-      
-      const response = await fetch("/api/asistencia", {
-        method: "POST",
+      const dietaFinal = formData.dietary.length > 0 ? formData.dietary.join(", ") : "Ninguna";
+      const infoFinal = formData.message 
+        ? `${dietaFinal} | Mensaje: ${formData.message}` 
+        : dietaFinal;
+
+      const response = await fetch("/api/guests", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          code: familyCode.toUpperCase().trim(),
           name: formData.name,
-          code: familyCode,
-          status: isConfirmed ? "CONFIRMED" : "CANCELLED",
-          attendanceChoice: formData.attendance,
-          allergy: formData.dietary.length > 0 ? formData.dietary.join(", ") : "Ninguna",
+          status: formData.attendance === "YES" ? "CONFIRMED" : "CANCELLED",
+          dietary: infoFinal,
         }),
       });
 
       if (response.ok) {
-        alert("¡Muchas gracias! Tu respuesta ha sido enviada.");
-        setIsOpen(false);
-        setIsValidated(false);
-        setFormData({ name: "", attendance: "", dietary: [] });
+        setAlreadyResponded(true);
+      } else {
+        alert("Hubo un problema al guardar. Por favor intenta de nuevo.");
       }
     } catch (error) {
-      alert("Hubo un error al enviar el formulario.");
+      alert("Error de red. Verifica tu conexión.");
     } finally {
       setIsSubmitting(false);
     }
@@ -84,26 +101,28 @@ export function RSVP() {
     });
   };
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
+  if (!mounted) return null;
 
   return (
-    <section className="relative py-32 bg-white overflow-hidden">
-      <div className="container mx-auto px-4 relative z-10 text-center">
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} className="flex justify-center mb-8">
-          <div className="w-20 h-20 rounded-full bg-black/5 border border-black/10 flex items-center justify-center">
-            <CalendarCheck className="w-9 h-9 text-black/60" />
+    <section className="relative py-24 bg-white overflow-hidden font-sans">
+      <div className="container mx-auto px-4 text-center">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="flex justify-center mb-6">
+          <div className="w-16 h-16 rounded-full bg-zinc-50 border border-zinc-100 flex items-center justify-center shadow-sm">
+            <CalendarCheck className="w-7 h-7 text-black stroke-[1.5]" />
           </div>
         </motion.div>
 
-        <h2 className="font-serif italic text-3xl md:text-5xl text-black mb-8">
-          ¡No podés faltar!
-        </h2>
-
+        <h2 className="font-serif italic text-5xl md:text-6xl text-black mb-10 tracking-tight">¡No podés faltar!</h2>
+     
+        <p className="text-zinc-600 font-medium tracking-[0.1em] mb-12 uppercase text-xs">
+          Confirma tu asistencia ahora
+        </p>
         <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(true)}
-          className="px-12 py-5 border border-black text-black tracking-[0.3em] text-[10px] uppercase font-semibold hover:bg-black hover:text-white rounded-full transition-all"
+          className="px-12 py-4 border border-black text-black tracking-[0.3em] text-[10px] uppercase font-bold hover:bg-black hover:text-white rounded-full transition-all duration-300 shadow-lg shadow-black/5"
         >
           CONFIRMAR MI ASISTENCIA
         </motion.button>
@@ -115,87 +134,110 @@ export function RSVP() {
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => !isSubmitting && setIsOpen(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
 
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-full max-w-lg bg-[#f4f4f4] rounded-2xl shadow-2xl overflow-hidden"
+              initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }}
+              className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100"
             >
-              {/* Header */}
-              <div className="bg-black text-white p-8 text-center relative">
-                <button onClick={() => setIsOpen(false)} className="absolute right-4 top-4 opacity-50 hover:opacity-100">
-                  <X size={24} />
-                </button>
-                <h3 className="tracking-[0.3em] text-[10px] font-bold">RSVP</h3>
-                <p className="font-serif italic text-xl">Confirmación</p>
-              </div>
-
-              <div className="p-8">
-                {!isValidated ? (
-                  /* VISTA 1: VALIDACIÓN DE CÓDIGO */
-                  <div className="space-y-6 text-center">
-                    <div className="flex justify-center">
-                      <KeyRound className="w-12 h-12 text-zinc-300" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black tracking-widest uppercase text-zinc-400 block mb-4">Ingresa tu código familiar</label>
-                      <input 
-                        type="text"
-                        value={familyCode}
-                        onChange={(e) => setFamilyCode(e.target.value.toUpperCase())}
-                        placeholder="EJ: GAR4829"
-                        className="w-full bg-white border-2 border-zinc-100 rounded-xl py-4 text-center text-xl font-mono tracking-[0.5em] focus:border-black outline-none transition-all text-black"
-                      />
-                    </div>
-                    <button 
-                      onClick={handleValidateCode}
-                      disabled={isSubmitting || familyCode.length < 3}
-                      className="w-full bg-black text-white py-4 rounded-xl font-bold text-xs tracking-widest uppercase disabled:opacity-30"
-                    >
-                      {isSubmitting ? "VALIDANDO..." : "INGRESAR"}
-                    </button>
+              {!isValidated ? (
+                // --- VISTA DE VALIDACIÓN (CÓDIGO) ---
+                <div className="p-10 text-center">
+                   <button onClick={() => setIsOpen(false)} className="absolute right-8 top-8 text-zinc-300 hover:text-black transition-colors">
+                    <X size={20} />
+                  </button>
+                  <KeyRound className="w-12 h-12 text-black/20 mx-auto mb-6" />
+                  <p className="tracking-[0.4em] text-[10px] font-bold uppercase text-zinc-400 mb-2">Seguridad</p>
+                  <h3 className="font-serif italic text-3xl text-black mb-8">Ingresá tu código</h3>
+                  
+                  <input 
+                    type="text"
+                    value={familyCode}
+                    onChange={(e) => setFamilyCode(e.target.value.toUpperCase())}
+                    placeholder="TU CÓDIGO AQUÍ"
+                    className="w-full bg-zinc-50 border-b-2 border-zinc-100 rounded-t-xl py-5 text-center text-2xl font-mono tracking-[0.3em] focus:border-black outline-none transition-all text-black uppercase"
+                  />
+                  {errorMessage && (
+                    <p className="mt-4 text-rose-500 text-[11px] font-bold flex items-center justify-center gap-2 uppercase tracking-wide">
+                      <AlertCircle size={14} /> {errorMessage}
+                    </p>
+                  )}
+                  <button 
+                    onClick={handleValidateCode}
+                    disabled={isSubmitting || familyCode.length < 3}
+                    className="w-full mt-8 bg-black text-white py-5 rounded-2xl font-bold text-[11px] tracking-widest uppercase disabled:bg-zinc-100 transition-all shadow-xl shadow-black/10"
+                  >
+                    {isSubmitting ? <Loader2 className="animate-spin mx-auto" /> : "ACCEDER"}
+                  </button>
+                </div>
+              ) : alreadyResponded ? (
+                // --- VISTA DE ÉXITO ---
+                <div className="p-12 text-center">
+                  <div className="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center text-black mx-auto mb-6 border border-zinc-100 shadow-inner">
+                    <PartyPopper size={40} strokeWidth={1.5} />
                   </div>
-                ) : (
-                  /* VISTA 2: FORMULARIO (Desbloqueado) */
-                  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+                  <h4 className="font-serif italic text-3xl text-black mb-4">¡Muchas gracias!</h4>
+                  <p className="text-zinc-500 text-sm leading-relaxed mb-8 font-light">
+                    Tu respuesta ya fue registrada. Estamos muy felices de compartir este día con vos.
+                  </p>
+                  <button onClick={() => setIsOpen(false)} className="px-10 py-4 bg-black text-white rounded-full text-[10px] font-bold tracking-widest uppercase">
+                    CERRAR
+                  </button>
+                </div>
+              ) : (
+                // --- VISTA DEL FORMULARIO PRINCIPAL (Estilo Imagen) ---
+                <div>
+                  {/* Encabezado Oscuro Estilo Imagen */}
+                  <div className="bg-zinc-900 text-center py-10 px-8 relative">
+                    <button onClick={() => setIsOpen(false)} className="absolute right-6 top-6 text-zinc-500 hover:text-white transition-colors">
+                      <X size={20} />
+                    </button>
+                    <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-zinc-500 mb-2">Invitado / Familia</p>
+                    <h3 className="font-serif italic text-4xl text-white mb-2">{guestInfo?.apellido}</h3>
+                    <div className="inline-block px-4 py-1 bg-white/5 rounded-full border border-white/10">
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-medium">Cupos: {guestInfo?.cupos}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-8 space-y-8 max-h-[65vh] overflow-y-auto custom-scrollbar">
                     {/* Nombre */}
-                    <div className="bg-white p-6 rounded-xl border border-black/5">
-                      <label className="text-[10px] font-black tracking-widest uppercase block mb-2 text-black">Tu Nombre</label>
+                    <div className="space-y-3">
+                      <label className="text-[9px] font-bold tracking-widest uppercase text-zinc-400">Confirmado por:</label>
                       <input
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full border-b border-zinc-200 py-2 outline-none focus:border-black text-black font-semibold"
-                        placeholder="Nombre y Apellido"
+                        className="w-full border-b-2 border-zinc-100 py-2 outline-none focus:border-black text-black font-serif italic text-xl transition-colors placeholder:text-zinc-200"
+                        placeholder="Nombre completo"
                       />
                     </div>
 
-                    {/* Asistencia */}
-                    <div className="bg-white p-6 rounded-xl border border-black/5">
-                      <label className="text-[10px] font-black tracking-widest uppercase block mb-4 text-black">¿Asistirás?</label>
-                      <div className="space-y-3">
-                        {["¡SÍ, OBVIO! 🤩", "NO VOY A PODER ASISTIR 😥"].map((op) => (
-                          <button
-                            key={op}
-                            onClick={() => setFormData({...formData, attendance: op})}
-                            className={`w-full py-3 px-4 rounded-lg text-xs font-bold transition-all border ${formData.attendance === op ? 'bg-black text-white border-black' : 'bg-zinc-50 text-zinc-400 border-transparent'}`}
-                          >
-                            {op}
-                          </button>
-                        ))}
-                      </div>
+                    {/* Botones de Asistencia */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => setFormData({...formData, attendance: "YES"})}
+                        className={`py-6 rounded-2xl text-[10px] font-bold transition-all border-2 flex flex-col items-center gap-3 ${formData.attendance === "YES" ? 'bg-black text-white border-black shadow-xl shadow-black/20' : 'bg-white text-zinc-300 border-zinc-100 hover:border-zinc-200'}`}
+                      >
+                        <CheckCircle2 size={20} strokeWidth={formData.attendance === "YES" ? 2.5 : 1.5} /> SÍ, ASISTIRÉ
+                      </button>
+                      <button
+                        onClick={() => setFormData({...formData, attendance: "NO"})}
+                        className={`py-6 rounded-2xl text-[10px] font-bold transition-all border-2 flex flex-col items-center gap-3 ${formData.attendance === "NO" ? 'bg-zinc-800 text-white border-zinc-800 shadow-xl' : 'bg-white text-zinc-300 border-zinc-100 hover:border-zinc-200'}`}
+                      >
+                        <X size={20} strokeWidth={formData.attendance === "NO" ? 2.5 : 1.5} /> NO PUEDO
+                      </button>
                     </div>
 
-                    {/* Dieta */}
-                    <div className="bg-white p-6 rounded-xl border border-black/5">
-                      <label className="text-[10px] font-black tracking-widest uppercase block mb-4 text-black">Menú Especial</label>
-                      <div className="grid grid-cols-1 gap-2">
-                        {["NINGUNA 🍽️", "SIN TACC 🚫🌾", "VEGANO 🥑"].map((item) => (
+                    {/* Menú */}
+                    <div className="space-y-4">
+                      <label className="text-[9px] font-bold tracking-widest uppercase text-zinc-400 block text-center">Preferencias de menú</label>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {["NINGUNA 🍽️", "SIN TACC 🚫🌾", "VEGANO 🥑", "VEGETARIANO 🥗"].map((item) => (
                           <button
                             key={item}
                             onClick={() => handleDietaryChange(item)}
-                            className={`text-left py-3 px-4 rounded-lg text-[10px] font-bold transition-all ${formData.dietary.includes(item) ? 'bg-zinc-900 text-white' : 'bg-zinc-50 text-zinc-500'}`}
+                            className={`py-3 px-5 rounded-full text-[9px] font-bold transition-all border ${formData.dietary.includes(item) ? 'bg-zinc-900 text-white border-zinc-900' : 'bg-zinc-50 text-zinc-500 border-zinc-100 hover:bg-zinc-100'}`}
                           >
                             {item}
                           </button>
@@ -203,16 +245,30 @@ export function RSVP() {
                       </div>
                     </div>
 
+                    {/* Mensaje */}
+                    <div className="bg-zinc-50 p-6 rounded-3xl space-y-3">
+                      <label className="text-[9px] font-bold tracking-widest uppercase block text-zinc-400 flex items-center gap-2">
+                        <MessageSquareHeart size={16} className="text-black" /> Un mensaje especial
+                      </label>
+                      <textarea
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        className="w-full border-none bg-transparent p-0 outline-none focus:ring-0 text-black font-medium text-sm placeholder:text-zinc-300 resize-none italic"
+                        rows={3}
+                        placeholder="Escribí tus deseos aquí..."
+                      />
+                    </div>
+
                     <button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
-                      className="w-full bg-black text-white py-5 rounded-xl text-[10px] font-black tracking-widest uppercase hover:bg-zinc-800 transition-all flex items-center justify-center gap-2"
+                      className="w-full bg-black text-white py-6 rounded-2xl text-[11px] font-bold tracking-[0.3em] uppercase hover:bg-zinc-800 transition-all flex items-center justify-center gap-3 shadow-2xl shadow-black/20"
                     >
-                      {isSubmitting ? <Loader2 className="animate-spin" /> : <><CheckCircle2 size={16}/> ENVIAR CONFIRMACIÓN</>}
+                      {isSubmitting ? <Loader2 className="animate-spin" /> : <><Heart size={16} className="fill-current"/> ENVIAR RESPUESTA</>}
                     </button>
-                  </motion.div>
-                )}
-              </div>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         )}

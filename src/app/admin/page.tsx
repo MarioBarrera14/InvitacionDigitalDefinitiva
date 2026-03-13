@@ -1,131 +1,107 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { MessageSquare, CheckCheck, Utensils } from "lucide-react"; // Añadí Utensils para coherencia visual
 import { motion } from "framer-motion";
-import { Users, CheckCircle2, XCircle, Clock, TrendingUp } from "lucide-react";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from "recharts";
 
-// Interfaz simplificada para la fiesta
-interface GuestStats {
-  totalInvitados: number;
-  confirmados: number;
-  cancelados: number;
-  pendientes: number;
-  dataGrafica: { name: string; cantidad: number }[];
+interface Message {
+  id: string;
+  apellido: string; // Cambiado de 'name' a 'apellido' para coincidir con tu DB
+  dietary: string;
+  status: string;
+  updatedAt: string;
 }
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<GuestStats | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulación de carga de datos (Sustituir por tu fetch real)
-    const mockData: GuestStats = {
-      totalInvitados: 150,
-      confirmados: 85,
-      cancelados: 12,
-      pendientes: 53,
-      dataGrafica: [
-        { name: "Confirmados", cantidad: 85 },
-        { name: "Pendientes", cantidad: 53 },
-        { name: "Cancelados", cantidad: 12 },
-      ],
+    const fetchMessages = async () => {
+      try {
+        const response = await fetch("/api/guests");
+        const invitados = await response.json();
+        
+        // Filtramos solo los que confirmaron
+        const confirmados = invitados
+          .filter((inv: any) => inv.status === "CONFIRMED")
+          .reverse(); 
+
+        setMessages(confirmados);
+      } catch (error) {
+        console.error("Error cargando mensajes:", error);
+      } finally {
+        setLoading(false);
+      }
     };
-    setStats(mockData);
-    setLoading(false);
+    fetchMessages();
   }, []);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white text-zinc-500">Cargando...</div>;
-
-  // Paleta monocromática para las barras
-  const COLORS = ["#000000", "#71717a", "#d4d4d8"];
-
   return (
-    <div className="min-h-screen bg-white py-10 transition-colors duration-300">
-      <div className="container mx-auto max-w-6xl px-6">
-        
-        {/* HEADER ESTILO EDITORIAL */}
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }} 
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-12 border-b border-zinc-100 pb-8"
-        >
-          <h1 className="text-4xl font-serif italic text-black mb-1">Resumen de Invitados</h1>
-          <p className="text-zinc-500 text-xs uppercase tracking-[0.3em]">XV Luz Jazmín • Dashboard</p>
-        </motion.div>
-
-        {/* METRICAS PRINCIPALES */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {[
-            { label: 'Total', value: stats?.totalInvitados, icon: Users, bg: 'bg-zinc-50' },
-            { label: 'Confirmados', value: stats?.confirmados, icon: CheckCircle2, bg: 'bg-zinc-900', text: 'text-white', iconCol: 'text-white' },
-            { label: 'Cancelados', value: stats?.cancelados, icon: XCircle, bg: 'bg-zinc-50' },
-            { label: 'Pendientes', value: stats?.pendientes, icon: Clock, bg: 'bg-zinc-50' },
-          ].map((item, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1 }}
-              className={`${item.bg} ${item.text || 'text-black'} rounded-2xl p-6 border border-zinc-100 flex items-center justify-between`}
-            >
-              <div>
-                <p className={`text-[10px] font-bold uppercase tracking-widest ${item.text ? 'opacity-70' : 'text-zinc-400'} mb-1`}>{item.label}</p>
-                <p className="text-3xl font-bold">{item.value}</p>
-              </div>
-              <item.icon className={`h-6 w-6 ${item.iconCol || 'text-zinc-400'}`} />
-            </motion.div>
-          ))}
+    <div className="max-w-2xl mx-auto space-y-6">
+      {/* HEADER ESTILO WHATSAPP */}
+      <div className="flex items-center justify-between border-b border-zinc-100 pb-4">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900">Muro de Confirmaciones</h1>
+          <p className="text-emerald-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+            En línea ahora
+          </p>
         </div>
-
-        {/* GRÁFICA DE ASISTENCIA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-3xl p-8 border border-zinc-100 shadow-sm"
-        >
-          <h2 className="text-lg font-bold mb-8 flex items-center gap-2 text-black">
-            <TrendingUp className="h-4 w-4" /> 
-            Estado de Confirmaciones
-          </h2>
-          <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats?.dataGrafica} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f4f4f5" />
-                <XAxis 
-                  dataKey="name" 
-                  tick={{ fontSize: 11, fill: '#71717a', fontWeight: 'bold' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis 
-                  tick={{ fontSize: 11, fill: '#71717a' }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip 
-                  cursor={{ fill: '#f8f8f8' }}
-                  contentStyle={{ 
-                    backgroundColor: '#000', 
-                    border: 'none', 
-                    borderRadius: '8px', 
-                    fontSize: '12px',
-                    color: '#fff'
-                  }}
-                  itemStyle={{ color: '#fff' }}
-                />
-                <Bar dataKey="cantidad" radius={[6, 6, 0, 0]} barSize={50}>
-                  {stats?.dataGrafica.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
+        <div className="bg-zinc-100 p-3 rounded-full text-zinc-400">
+          <MessageSquare size={20} />
+        </div>
       </div>
+
+      {/* CONTENEDOR DE CHAT */}
+      <div className="space-y-4 bg-[#efe7dd] p-4 sm:p-6 rounded-[2rem] min-h-[500px] border border-zinc-200 relative overflow-hidden shadow-inner">
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+
+        {loading ? (
+          <div className="flex justify-center items-center h-full text-zinc-400 font-serif italic">
+            Abriendo chat...
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="text-center py-20 text-zinc-400">
+            Aún no hay mensajes de confirmación.
+          </div>
+        ) : (
+          messages.map((msg, index) => (
+            <motion.div
+              key={msg.id || index}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="flex flex-col items-start"
+            >
+              {/* BURBUJA DE MENSAJE */}
+              <div className="relative max-w-[85%] bg-white rounded-2xl rounded-tl-none p-3 shadow-sm border border-zinc-100">
+                <div className="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white border-l-[10px] border-l-transparent" />
+                
+                {/* NOMBRE DEL INVITADO (APELLIDO) */}
+                <p className="text-[10px] font-bold text-pink-500 mb-1 uppercase tracking-tighter">
+                  {msg.apellido}
+                </p>
+                
+                <p className="text-zinc-800 text-sm leading-snug mb-2">
+                 {msg.dietary}
+                </p>
+
+                <div className="flex items-center justify-end gap-1">
+                  <span className="text-[9px] text-zinc-400 uppercase">
+                    Confirmado
+                  </span>
+                  <CheckCheck size={14} className="text-blue-400" />
+                </div>
+              </div>
+            </motion.div>
+          ))
+        )}
+      </div>
+
+      <p className="text-center text-[9px] text-zinc-400 uppercase tracking-widest font-medium">
+        Las confirmaciones se actualizan automáticamente
+      </p>
     </div>
   );
 }

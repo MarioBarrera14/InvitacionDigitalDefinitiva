@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Guest {
+  id        String   @id @default(cuid())
+  apellido  String
+  cupos     Int      @default(1)
+  codigo    String   @unique
+  // Campos nuevos:
+  status    String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
+  dietary   String?  // Para guardar alergias o menú especial
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("guests")
+}

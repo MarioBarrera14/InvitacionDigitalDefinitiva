@@ -1,11 +1,34 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { eventConfig } from "../data/event-config";
 import { MapPin, PartyPopper } from "lucide-react";
 
 export function Location() {
-  const { ubicacion } = eventConfig;
+  // Estados para que la UI sea dinámica
+  const [datosUbicacion, setDatosUbicacion] = useState({
+    nombreLugar: "Cargando...",
+    subtituloLugar: "",
+    hora: "00:00 HS",
+    direccion: "",
+    googleMapsUrl: "#"
+  });
+
+  useEffect(() => {
+    // Leemos los datos guardados por el configurador
+    const savedVenue = localStorage.getItem("venueName") || "Nombre del Salón";
+    const savedAddress = localStorage.getItem("venueAddress") || "Dirección del evento";
+    const savedTime = localStorage.getItem("eventTime") || "21:00";
+    const savedLink = localStorage.getItem("mapLink") || "#";
+
+    setDatosUbicacion({
+      nombreLugar: savedVenue,
+      subtituloLugar: "LA CELEBRACIÓN", // Puedes hacerlo editable también si gustas
+      hora: `${savedTime} HS`,
+      direccion: savedAddress,
+      googleMapsUrl: savedLink
+    });
+  }, []);
 
   return (
     <section className="relative py-20 md:py-28 bg-white overflow-hidden">
@@ -16,14 +39,13 @@ export function Location() {
 
       <div className="container mx-auto px-6 relative z-10">
         
-        {/* Encabezado con Icono Animado (Efecto Brindis/Fiesta) */}
+        {/* Encabezado con Icono Animado */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="text-center mb-10 flex flex-col items-center"
         >
-          {/* Icono animado: Simula el movimiento del brindis minimalista */}
           <motion.div 
             className="mb-4 text-black"
             animate={{ 
@@ -44,7 +66,7 @@ export function Location() {
           </span>
         </motion.div>
 
-        {/* Contenido principal agrupado */}
+        {/* Contenido principal dinámico */}
         <div className="max-w-2xl mx-auto text-center">
           
           <motion.div
@@ -54,14 +76,15 @@ export function Location() {
             transition={{ duration: 0.8 }}
           >
             <h3 className="text-5xl md:text-7xl font-serif italic text-black mb-2 tracking-tighter">
-              {ubicacion.nombreLugar}
+              {datosUbicacion.nombreLugar}
             </h3>
             <p className="text-black/50 text-[10px] md:text-xs tracking-[0.4em] uppercase font-light mb-8">
-              {ubicacion.subtituloLugar}
+              {/* Aquí podrías poner un subtitulo fijo o hacerlo dinámico */}
+              DETALLES DEL EVENTO
             </p>
           </motion.div>
 
-          {/* Bloque central unificado (Hora + Dirección) */}
+          {/* Bloque central (Hora + Dirección) dinámico */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -71,17 +94,17 @@ export function Location() {
             <div className="flex items-center justify-center gap-4 mb-4">
               <div className="h-[1px] w-6 bg-black/20" />
               <p className="text-black font-serif italic text-3xl md:text-5xl">
-                {ubicacion.hora}
+                {datosUbicacion.hora}
               </p>
               <div className="h-[1px] w-6 bg-black/20" />
             </div>
             
             <p className="text-black/70 font-light text-base md:text-xl tracking-wide">
-              {ubicacion.direccion}
+              {datosUbicacion.direccion}
             </p>
           </motion.div>
 
-          {/* Botón de Acción */}
+          {/* Botón de Acción con el link dinámico */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -89,7 +112,7 @@ export function Location() {
             transition={{ delay: 0.3 }}
           >
             <a
-              href={ubicacion.googleMapsUrl}
+              href={datosUbicacion.googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center gap-4 px-10 py-4 border border-black text-black rounded-full hover:bg-black hover:text-white transition-all duration-500 ease-in-out"
