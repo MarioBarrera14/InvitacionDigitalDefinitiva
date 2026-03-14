@@ -1,28 +1,62 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Disc3 } from "lucide-react";
+import { Disc3, Music, Headset } from "lucide-react";
 import { eventConfig } from "../data/event-config";
 
 export function MusicSuggestion() {
   const cancionesUrl = eventConfig.canciones?.formularioUrl || "#";
 
+  // Configuración para las barras del ecualizador
+  const bars = Array.from({ length: 40 });
+
   return (
     <section className="relative py-32 bg-black overflow-hidden">
-         <div className="absolute top-0 left-0 w-full overflow-hidden leading-[0]">
+      {/* ONDA SUPERIOR */}
+      <div className="absolute top-0 left-0 w-full overflow-hidden leading-[0] z-20">
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-full h-[60px] md:h-[100px]">
           <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,35.26,69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="#ffffff"></path>
         </svg>
       </div>
-      {/* Fondo de Ondas Animadas */}
-      <div className="absolute inset-0 z-0 opacity-40">
-        <svg
-          viewBox="0 0 1440 320"
-          className="absolute bottom-0 w-full h-full preserve-3d"
-          preserveAspectRatio="none"
-        >
+
+      {/* EFECTO DE LUZ DE FONDO (GLOW) */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <motion.div 
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.1, 0.2, 0.1] 
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          className="w-[500px] h-[500px] bg-rose-500/20 rounded-full blur-[120px]"
+        />
+      </div>
+
+      {/* BARRAS DE ECUALIZADOR DINÁMICAS */}
+      <div className="absolute bottom-24 left-0 w-full flex justify-center items-end gap-1 px-4 opacity-30 z-0 h-20">
+        {bars.map((_, i) => (
+          <motion.div
+            key={i}
+            animate={{ 
+              height: [
+                Math.random() * 20 + 10, 
+                Math.random() * 80 + 20, 
+                Math.random() * 20 + 10
+              ] 
+            }}
+            transition={{ 
+              duration: Math.random() * 0.5 + 0.5, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+            className="w-1 md:w-2 bg-gradient-to-t from-white/0 via-white/50 to-white rounded-full"
+          />
+        ))}
+      </div>
+
+      {/* Fondo de Ondas Animadas (Tu código original) */}
+      <div className="absolute inset-0 z-0 opacity-20">
+        <svg viewBox="0 0 1440 320" className="absolute bottom-0 w-full h-full" preserveAspectRatio="none">
           <motion.path
-            initial={{ d: "M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,144C672,139,768,181,864,202.7C960,224,1056,224,1152,202.7C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" }}
             animate={{ 
               d: [
                 "M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,144C672,139,768,181,864,202.7C960,224,1056,224,1152,202.7C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
@@ -30,56 +64,74 @@ export function MusicSuggestion() {
                 "M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,144C672,139,768,181,864,202.7C960,224,1056,224,1152,202.7C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
               ]
             }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
             fill="#1a1a1a"
           />
         </svg>
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 text-center flex flex-col items-center">
+      <div className="container mx-auto px-6 relative z-30 text-center flex flex-col items-center">
         
-        {/* Ícono animado */}
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-          className="mb-10 text-white/20"
-        >
-          <Disc3 className="w-16 h-16 md:w-20 md:h-20 stroke-[1px]" />
-        </motion.div>
+        {/* ÍCONO PRINCIPAL - Disco Girando + Aura */}
+        <div className="relative mb-12">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+            className="relative z-10 text-white/40"
+          >
+            <Disc3 className="w-20 h-20 md:w-28 md:h-28 stroke-[0.5px]" />
+          </motion.div>
+          {/* Nota musical saltarina */}
+          <motion.div
+            animate={{ y: [0, -15, 0], opacity: [0, 1, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+            className="absolute -top-4 -right-4 text-white/60"
+          >
+            <Music size={24} />
+          </motion.div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="mb-12 max-w-lg"
+          className="mb-14"
         >
-          <h3 className="text-4xl md:text-5xl font-serif italic text-white tracking-tight mb-5">
-            ¡Te invito a ser mi DJ personal!
+          <span className="text-[10px] tracking-[0.5em] text-rose-300 uppercase font-bold mb-4 block">
+            The Party Soundtrack
+          </span>
+          <h3 className="text-5xl md:text-7xl font-serif italic text-white tracking-tight mb-6">
+            ¡Te invito a ser <br />mi DJ personal!
           </h3>
-          <p className="text-white/40 text-sm md:text-base font-light tracking-[0.2em] uppercase leading-relaxed">
-            Ayudame a armar<br />la lista de canciones
+          <p className="text-white/40 text-sm md:text-base font-light tracking-[0.2em] uppercase max-w-sm mx-auto leading-loose">
+            ¿Qué canción no puede <br /> faltar en la pista?
           </p>
         </motion.div>
 
+        {/* BOTÓN ESTILO "PLAYER" */}
         <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           <a
             href={cancionesUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 px-10 py-4 border border-white/20 text-white tracking-[0.3em] text-[10px] md:text-xs uppercase rounded-full hover:bg-white hover:text-black transition-all duration-700 ease-in-out group shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+            className="group relative inline-flex items-center gap-4 px-12 py-5 bg-white text-black font-bold tracking-[0.3em] text-[10px] md:text-xs uppercase rounded-full transition-all duration-500 overflow-hidden"
           >
+            {/* Efecto de brillo al pasar el mouse */}
+            <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-full group-hover:animate-shimmer" />
+            
+            <Headset className="w-5 h-5" />
             SUGERÍ TU TEMA ACÁ
           </a>
         </motion.div>
 
-        <div className="h-[1px] w-16 bg-white/10 mt-20 mx-auto" />
+        <div className="h-[1px] w-24 bg-gradient-to-r from-transparent via-white/20 to-transparent mt-24 mx-auto" />
       </div>
-            {/* ONDA INFERIOR (Blanca, volteada para salir del negro al blanco de abajo) */}
-      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
+
+      {/* ONDA INFERIOR */}
+      <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0] z-20">
         <svg 
           viewBox="0 0 1200 120" 
           preserveAspectRatio="none" 
