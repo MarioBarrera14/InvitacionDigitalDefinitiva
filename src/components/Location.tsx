@@ -2,33 +2,52 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { MapPin, PartyPopper } from "lucide-react";
+import { MapPin, PartyPopper, Loader2 } from "lucide-react";
+import { getEventConfig } from "@/app/api/admin/count/route"; // Importamos la acción de servidor
 
 export function Location() {
-  // Estados para que la UI sea dinámica
+  const [loading, setLoading] = useState(true);
   const [datosUbicacion, setDatosUbicacion] = useState({
-    nombreLugar: "Cargando...",
-    subtituloLugar: "",
-    hora: "00:00 HS",
+    nombreLugar: "",
+    subtituloLugar: "LA CELEBRACIÓN",
+    hora: "",
     direccion: "",
     googleMapsUrl: "#"
   });
 
   useEffect(() => {
-    // Leemos los datos guardados por el configurador
-    const savedVenue = localStorage.getItem("venueName") || "Nombre del Salón";
-    const savedAddress = localStorage.getItem("venueAddress") || "Dirección del evento";
-    const savedTime = localStorage.getItem("eventTime") || "21:00";
-    const savedLink = localStorage.getItem("mapLink") || "#";
+    async function cargarDatos() {
+      try {
+        // Llamada a la base de datos
+        const config = await getEventConfig();
 
-    setDatosUbicacion({
-      nombreLugar: savedVenue,
-      subtituloLugar: "LA CELEBRACIÓN", // Puedes hacerlo editable también si gustas
-      hora: `${savedTime} HS`,
-      direccion: savedAddress,
-      googleMapsUrl: savedLink
-    });
+        if (config) {
+          setDatosUbicacion({
+            nombreLugar: config.venueName,
+            subtituloLugar: "LA CELEBRACIÓN",
+            hora: `${config.eventTime} HS`,
+            direccion: config.venueAddress,
+            googleMapsUrl: config.mapLink || "#"
+          });
+        }
+      } catch (error) {
+        console.error("Error cargando ubicación:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    cargarDatos();
   }, []);
+
+  // Si está cargando, podemos mostrar un estado sutil o nada para evitar el "salto" de texto
+  if (loading) {
+    return (
+      <div className="py-20 text-center">
+        <Loader2 className="w-6 h-6 animate-spin mx-auto text-black/20" />
+      </div>
+    );
+  }
 
   return (
     <section className="relative py-20 md:py-28 bg-white overflow-hidden">
@@ -62,11 +81,11 @@ export function Location() {
           </motion.div>
           
           <span className="text-black/30 tracking-[0.5em] text-[10px] uppercase font-light">
-            LA CELEBRACIÓN
+            {datosUbicacion.subtituloLugar}
           </span>
         </motion.div>
 
-        {/* Contenido principal dinámico */}
+        {/* Contenido principal dinámico desde Base de Datos */}
         <div className="max-w-2xl mx-auto text-center">
           
           <motion.div
@@ -79,12 +98,11 @@ export function Location() {
               {datosUbicacion.nombreLugar}
             </h3>
             <p className="text-black/50 text-[10px] md:text-xs tracking-[0.4em] uppercase font-light mb-8">
-              {/* Aquí podrías poner un subtitulo fijo o hacerlo dinámico */}
               DETALLES DEL EVENTO
             </p>
           </motion.div>
 
-          {/* Bloque central (Hora + Dirección) dinámico */}
+          {/* Bloque central (Hora + Dirección) */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -104,7 +122,7 @@ export function Location() {
             </p>
           </motion.div>
 
-          {/* Botón de Acción con el link dinámico */}
+          {/* Botón de Acción con el link de Maps de la DB */}
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}

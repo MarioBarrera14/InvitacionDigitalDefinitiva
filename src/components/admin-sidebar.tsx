@@ -13,7 +13,8 @@ import {
   Settings,
   TicketPlus,
   Home,
-  Image, // Importamos el icono para Galería
+  Image,
+  Pencil, // Importamos el icono para Galería
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,6 +24,7 @@ const menuItems = [
   { title: 'Gestión Invitados', href: '/admin/invitados', icon: TicketPlus },
   { title: 'Galería', href: '/admin/galeria', icon: Image }, // Nuevo botón añadido
   { title: 'Configuración', href: '/admin/count', icon: Settings }, 
+  { title: 'Editar detalles', href: '/admin/details', icon: Pencil }, 
 ];
 
 export function AdminSidebar() {

@@ -2,34 +2,46 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, Calendar, Clock, RefreshCw, User, MapPin, Link as LinkIcon, Home } from "lucide-react";
+import { Save, Calendar, Clock, RefreshCw, User, MapPin, Link as LinkIcon, Home, Loader2 } from "lucide-react";
+import { getEventConfig, updateEventConfig } from "@/app/api/admin/count/route";
 
 interface TimeLeft {
-  days: number;
-  hours: number;
-  mins: number;
-  secs: number;
+  days: number; hours: number; mins: number; secs: number;
 }
 
 export default function CountConfigPage() {
+  // Estados de carga
+  const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Estados de los campos
   const [eventDate, setEventDate] = useState<string>("2026-12-19");
   const [eventTime, setEventTime] = useState<string>("21:00");
   const [eventName, setEventName] = useState<string>("Luz Jazmín");
   const [venueName, setVenueName] = useState<string>("Howard Johnson");
   const [venueAddress, setVenueAddress] = useState<string>("RP11 km 400, Cariló");
-  const [mapLink, setMapLink] = useState<string>("https://maps.google.com");
+  const [mapLink, setMapLink] = useState<string>("");
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, mins: 0, secs: 0 });
 
+  // 1. CARGAR DATOS DE LA BASE DE DATOS
   useEffect(() => {
-    setEventDate(localStorage.getItem("eventDate") || "2026-12-19");
-    setEventTime(localStorage.getItem("eventTime") || "21:00");
-    setEventName(localStorage.getItem("eventName") || "Luz Jazmín");
-    setVenueName(localStorage.getItem("venueName") || "Howard Johnson");
-    setVenueAddress(localStorage.getItem("venueAddress") || "RP11 km 400, Cariló");
-    setMapLink(localStorage.getItem("mapLink") || "");
+    async function fetchData() {
+      const config = await getEventConfig();
+      if (config) {
+        setEventDate(config.eventDate);
+        setEventTime(config.eventTime);
+        setEventName(config.eventName);
+        setVenueName(config.venueName);
+        setVenueAddress(config.venueAddress);
+        setMapLink(config.mapLink);
+      }
+      setLoading(false);
+    }
+    fetchData();
   }, []);
 
+  // 2. LÓGICA DEL CONTADOR (Se mantiene igual)
   useEffect(() => {
     const timer = setInterval(() => {
       const target = new Date(`${eventDate}T${eventTime}:00`);
@@ -50,31 +62,42 @@ export default function CountConfigPage() {
     return () => clearInterval(timer);
   }, [eventDate, eventTime]);
 
-  const handleSave = () => {
-    try {
-      localStorage.setItem("eventDate", eventDate);
-      localStorage.setItem("eventTime", eventTime);
-      localStorage.setItem("eventName", eventName);
-      localStorage.setItem("venueName", venueName);
-      localStorage.setItem("venueAddress", venueAddress);
-      localStorage.setItem("mapLink", mapLink);
-      
-      alert(`¡Configuración guardada! 🎉`);
-      window.location.reload();
-    } catch (error) {
-      alert("Hubo un error al guardar.");
+  // 3. GUARDAR EN LA BASE DE DATOS
+  const handleSave = async () => {
+    setIsSaving(true);
+    const result = await updateEventConfig({
+      eventName,
+      eventDate,
+      eventTime,
+      venueName,
+      venueAddress,
+      mapLink,
+    });
+
+    if (result.success) {
+      alert("¡Configuración guardada en la base de datos! 🎉");
+    } else {
+      alert("Error al guardar.");
     }
+    setIsSaving(false);
   };
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-zinc-50">
+        <Loader2 className="h-8 w-8 animate-spin text-zinc-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-10 max-w-5xl mx-auto">
       <div className="mb-10 text-center md:text-left">
         <h1 className="text-3xl font-serif italic font-bold text-zinc-900 dark:text-white">Panel de Control</h1>
-        <p className="text-zinc-500 text-sm">Personaliza los detalles de tu invitación</p>
+        <p className="text-zinc-500 text-sm">Personaliza los detalles de tu invitación (Datos en Base de Datos)</p>
       </div>
 
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
-        {/* Formulario de Configuración */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -124,22 +147,22 @@ export default function CountConfigPage() {
             </div>
           </div>
 
-          <button onClick={handleSave} className="w-full bg-zinc-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.01] transition-all shadow-lg">
-            <Save className="h-5 w-5" /> GUARDAR TODO
+          <button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="w-full bg-zinc-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.01] transition-all shadow-lg disabled:opacity-50"
+          >
+            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+            {isSaving ? "GUARDANDO..." : "GUARDAR EN BASE DE DATOS"}
           </button>
         </motion.div>
 
-        {/* Vista Previa */}
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-2 space-y-6"
-        >
-          {/* Card del Lugar */}
+        {/* Vista Previa (Sin cambios visuales) */}
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-2 space-y-6">
           <div className="bg-white p-10 rounded-3xl border border-zinc-100 shadow-xl flex flex-col items-center text-center space-y-6">
              <div className="space-y-1">
                 <h2 className="text-4xl font-serif italic text-zinc-800">{venueName}</h2>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-semibold uppercase">LA CELEBRACIÓN</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-semibold">LA CELEBRACIÓN</p>
              </div>
              <div className="w-16 h-[1px] bg-zinc-100" />
              <div className="flex items-center gap-4 text-4xl font-serif italic font-bold text-zinc-900">
@@ -148,34 +171,24 @@ export default function CountConfigPage() {
                 <span className="w-8 h-[1px] bg-zinc-200" />
              </div>
              <p className="text-zinc-500 font-medium tracking-wide">{venueAddress}</p>
-             
-             {/* BOTÓN NEGRO ACTUALIZADO */}
-             <button className="flex items-center gap-3 px-10 py-4 bg-zinc-900 text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-md">
+             <a href={mapLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-10 py-4 bg-zinc-900 text-white rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors shadow-md">
                 <MapPin className="w-3 h-3 stroke-[2px]" />
                 CÓMO LLEGAR
-             </button>
+             </a>
           </div>
 
-          {/* Widget Contador con Nombre */}
           <div className="bg-zinc-900 text-white p-8 rounded-3xl flex flex-col items-center gap-6 relative overflow-hidden">
              <div className="absolute top-0 right-0 p-4 opacity-5">
                 <RefreshCw className="h-16 w-16 rotate-12" />
              </div>
-             
              <div className="grid grid-cols-4 gap-6 w-full text-center">
-                {[
-                  { label: 'Días', value: timeLeft.days }, 
-                  { label: 'Hrs', value: timeLeft.hours }, 
-                  { label: 'Min', value: timeLeft.mins }, 
-                  { label: 'Seg', value: timeLeft.secs }
-                ].map((unit, i) => (
+                {[{ label: 'Días', value: timeLeft.days }, { label: 'Hrs', value: timeLeft.hours }, { label: 'Min', value: timeLeft.mins }, { label: 'Seg', value: timeLeft.secs }].map((unit, i) => (
                   <div key={i} className="flex flex-col">
                     <span className="text-2xl font-serif italic font-bold">{unit.value}</span>
                     <span className="text-[8px] uppercase tracking-tighter opacity-50">{unit.label}</span>
                   </div>
                 ))}
              </div>
-
              <div className="w-full border-t border-white/10 pt-4 text-center">
                 <p className="text-[10px] font-light opacity-60 uppercase tracking-[0.2em] mb-1">Faltan para el gran día de</p>
                 <p className="text-xl font-serif italic">{eventName}</p>

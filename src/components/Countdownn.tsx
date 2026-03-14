@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { eventConfig } from "../data/event-config";
+import { getEventConfig } from "@/app/api/admin/count/route"; // Importamos la acción del servidor
 
 function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
@@ -18,7 +18,6 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
 }
 
 export function Countdown() {
-  const { fecha } = eventConfig;
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [formattedDate, setFormattedDate] = useState("");
@@ -26,39 +25,45 @@ export function Countdown() {
   useEffect(() => {
     setMounted(true);
 
-    // 1. Obtener datos de LocalStorage o usar los del archivo config por defecto
-    const savedDate = localStorage.getItem("eventDate");
-    const savedTime = localStorage.getItem("eventTime") || "21:00";
-    
-    // Si no hay fecha guardada, construimos la de eventConfig (mes es 0-indexed en JS Date)
-    const defaultDate = `${fecha.año}-${String(fecha.mes).padStart(2, '0')}-${String(fecha.dia).padStart(2, '0')}`;
-    const finalDate = savedDate || defaultDate;
+    async function initCountdown() {
+      // 1. Obtener datos de la Base de Datos
+      const config = await getEventConfig();
+      
+      // Valores por defecto por si la DB está vacía aún
+      const finalDate = config?.eventDate || "2026-12-19";
+      const finalTime = config?.eventTime || "21:00";
 
-    // 2. Formatear la fecha para el texto superior (Ej: 19 DE DICIEMBRE DE 2026)
-    const dateForText = new Date(`${finalDate}T12:00:00`); // 12:00 para evitar errores de zona horaria
-    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    setFormattedDate(dateForText.toLocaleDateString('es-ES', options).toUpperCase());
+      // 2. Formatear la fecha para el texto (Ej: 19 DE DICIEMBRE DE 2026)
+      // Usamos el reemplazo de guiones para evitar problemas de desfase horario en navegadores
+      const dateParts = finalDate.split("-");
+      const dateForText = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]));
+      
+      const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+      setFormattedDate(dateForText.toLocaleDateString('es-ES', options).toUpperCase());
 
-    // 3. Iniciar el intervalo del reloj
-    const timer = setInterval(() => {
-      const target = new Date(`${finalDate}T${savedTime}:00`).getTime();
-      const now = new Date().getTime();
-      const diff = target - now;
+      // 3. Iniciar el intervalo del reloj
+      const timer = setInterval(() => {
+        const target = new Date(`${finalDate}T${finalTime}:00`).getTime();
+        const now = new Date().getTime();
+        const diff = target - now;
 
-      if (diff > 0) {
-        setTimeLeft({
-          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((diff / 1000 / 60) % 60),
-          seconds: Math.floor((diff / 1000) % 60),
-        });
-      } else {
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      }
-    }, 1000);
+        if (diff > 0) {
+          setTimeLeft({
+            days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+            hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+            minutes: Math.floor((diff / 1000 / 60) % 60),
+            seconds: Math.floor((diff / 1000) % 60),
+          });
+        } else {
+          setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        }
+      }, 1000);
 
-    return () => clearInterval(timer);
-  }, [fecha]);
+      return () => clearInterval(timer);
+    }
+
+    initCountdown();
+  }, []);
 
   if (!mounted) return null;
 
@@ -92,7 +97,7 @@ export function Countdown() {
         </div>
       </div>
 
-      {/* Separador de Onda Volteada */}
+      {/* Separador de Onda */}
       <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
         <svg 
           viewBox="0 0 1200 120" 

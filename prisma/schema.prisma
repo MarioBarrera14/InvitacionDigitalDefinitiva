@@ -12,11 +12,37 @@ model Guest {
   apellido  String
   cupos     Int      @default(1)
   codigo    String   @unique
-  // Campos nuevos:
-  status    String   @default("PENDING") // PENDING, CONFIRMED, CANCELLED
-  dietary   String?  // Para guardar alergias o menú especial
+  status    String   @default("PENDING") 
+  dietary   String?  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("guests")
+}
+
+// --- AGREGA ESTO PARA LOS DETALLES Y EL PANEL DE CONTROL ---
+model EventConfig {
+  id               Int      @id @default(1) // Siempre usaremos el ID 1
+  heroImage        String?  @default("")
+  videoUrl         String?  @default("")
+  carruselImages   String?  @default("[]")
+  // Datos del Formulario "CountConfigPage"
+  eventName        String   @default("Luz Jazmín")
+  eventDate        String   @default("2026-12-19")
+  eventTime        String   @default("21:00")
+  venueName        String   @default("Howard Johnson")
+  venueAddress     String   @default("RP11 km 400, Cariló")
+  mapLink          String   @default("")
+
+  // Datos del Formulario "DetailsConfigPage"
+  dressCode        String   @default("Elegante Sport")
+  dressDescription String   @default("¡Tu presencia es lo más importante!")
+  cbu              String   @default("0000003100012345678901")
+  alias            String   @default("LUZ.JAZMIN.15")
+  bankName         String   @default("Mercado Pago")
+  holderName       String   @default("Luz Jazmín Pérez")
+
+  updatedAt        DateTime @updatedAt
+
+  @@map("event_config")
 }
