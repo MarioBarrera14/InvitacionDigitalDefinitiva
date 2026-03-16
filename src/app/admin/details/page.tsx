@@ -2,60 +2,83 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { 
-  Save, Gift, Shirt, Copy, Pencil, Loader2 
-} from "lucide-react";
+import { Save, Gift, Shirt, Copy, Pencil, Loader2 } from "lucide-react";
 import { getEventConfig, updateEventDetails } from "@/app/api/admin/details/route";
+import Swal from "sweetalert2";
 
 export default function DetailsConfigPage() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Estados para Vestimenta
+  // Estados
   const [dressCode, setDressCode] = useState<string>("Elegante Sport");
-  const [dressDescription, setDressDescription] = useState<string>("¡Tu presencia es lo más importante!");
-
-  // Estados para Regalos/CBU
+  const [dressDescription, setDressDescription] = useState<string>("");
   const [cbu, setCbu] = useState<string>("");
   const [alias, setAlias] = useState<string>("");
   const [bankName, setBankName] = useState<string>("");
   const [holderName, setHolderName] = useState<string>("");
 
-  // 1. CARGA INICIAL DESDE LA BASE DE DATOS
   useEffect(() => {
     async function loadData() {
-      const config = await getEventConfig();
-      if (config) {
-        setDressCode(config.dressCode);
-        setDressDescription(config.dressDescription);
-        setCbu(config.cbu);
-        setAlias(config.alias);
-        setBankName(config.bankName);
-        setHolderName(config.holderName);
+      try {
+        const config = await getEventConfig();
+        if (config) {
+          setDressCode(config.dressCode || "");
+          setDressDescription(config.dressDescription || "");
+          setCbu(config.cbu || "");
+          setAlias(config.alias || "");
+          setBankName(config.bankName || "");
+          setHolderName(config.holderName || "");
+        }
+      } catch (err) {
+        console.error("Error cargando configuración:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     loadData();
   }, []);
 
-  // 2. GUARDAR EN LA BASE DE DATOS
   const handleSave = async () => {
     setIsSaving(true);
-    const result = await updateEventDetails({
-      dressCode,
-      dressDescription,
-      cbu,
-      alias,
-      bankName,
-      holderName,
-    });
+    try {
+      const result = await updateEventDetails({
+        dressCode,
+        dressDescription,
+        cbu,
+        alias,
+        bankName,
+        holderName,
+      });
 
-    if (result.success) {
-      alert("¡Detalles guardados en la base de datos! ✨");
-    } else {
-      alert("Hubo un error al guardar.");
+      if (result.success) {
+        Swal.fire({
+          title: "¡Guardado!",
+          text: "Los detalles se actualizaron correctamente. ✨",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+          confirmButtonColor: "#18181b",
+          customClass: {
+            popup: 'rounded-3xl'
+          }
+        });
+      } else {
+        throw new Error(result.error || "Error desconocido");
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "Error",
+        text: "Hubo un problema al guardar los cambios.",
+        icon: "error",
+        confirmButtonColor: "#18181b",
+        customClass: {
+          popup: 'rounded-3xl'
+        }
+      });
+    } finally {
+      setIsSaving(false);
     }
-    setIsSaving(false);
   };
 
   if (loading) return (
@@ -84,7 +107,6 @@ export default function DetailsConfigPage() {
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-        
         {/* SECCIÓN VESTIMENTA */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -174,30 +196,6 @@ export default function DetailsConfigPage() {
             </div>
           </div>
         </motion.div>
-
-        {/* VISTA PREVIA RÁPIDA */}
-        <div className="md:col-span-2 mt-4">
-           <p className="text-[10px] font-bold text-zinc-400 uppercase mb-4 tracking-widest text-center">Así se verá en la invitación</p>
-           <div className="grid md:grid-cols-2 gap-6 bg-zinc-50 dark:bg-slate-900/50 p-10 rounded-[3rem] border border-dashed border-zinc-200 dark:border-slate-800">
-              <div className="text-center space-y-3">
-                 <Shirt className="w-6 h-6 mx-auto text-zinc-400" />
-                 <h4 className="font-serif italic text-2xl text-zinc-800 dark:text-white">{dressCode || "Sin definir"}</h4>
-                 <p className="text-sm text-zinc-500 italic px-4">{dressDescription || "Esperamos tu outfit..."}</p>
-              </div>
-
-              <div className="text-center space-y-3 border-t md:border-t-0 md:border-l border-zinc-200 dark:border-slate-800 pt-6 md:pt-0 md:pl-6">
-                 <Gift className="w-6 h-6 mx-auto text-zinc-400" />
-                 <h4 className="font-serif italic text-2xl text-zinc-800 dark:text-white">Regalos</h4>
-                 <div className="text-[10px] space-y-1">
-                    <p className="font-bold text-zinc-400 uppercase">{bankName || "BANCO"}</p>
-                    <p className="text-zinc-600 dark:text-zinc-300">Alias: {alias || "..."}</p>
-                    <div className="mx-auto flex items-center justify-center gap-1 text-zinc-400">
-                       <Copy className="h-3 w-3" /> <span className="uppercase tracking-tighter">CBU: {cbu || "..."}</span>
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </div>
       </div>
     </div>
   );

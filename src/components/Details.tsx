@@ -1,9 +1,18 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check, X, Shirt, Gift, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { getEventConfig } from "@/app/api/admin/details/route"; // Importamos la acción de servidor
+import { Copy, Check, X, Shirt, Gift } from "lucide-react";
+import { useState } from "react";
+
+// --- INTERFAZ DE PROPS (Datos que vienen de la DB) ---
+interface DetailsProps {
+  dressCode?: string | null;
+  dressDescription?: string | null;
+  cbu?: string | null;
+  alias?: string | null;
+  bankName?: string | null;
+  holderName?: string | null;
+}
 
 // --- COMPONENTE MODAL ---
 function DetailModal({ isOpen, onClose, title, children }: { isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
@@ -56,41 +65,15 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   );
 }
 
-export function Details() {
+export function Details({ 
+  dressCode, 
+  dressDescription, 
+  cbu, 
+  alias, 
+  bankName, 
+  holderName 
+}: DetailsProps) {
   const [activeModal, setActiveModal] = useState<"dress" | "gift" | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const [data, setData] = useState({
-    dressCode: "",
-    dressDescription: "",
-    cbu: "",
-    alias: "",
-    bankName: "",
-    holderName: ""
-  });
-
-  useEffect(() => {
-    async function loadConfig() {
-      try {
-        const config = await getEventConfig();
-        if (config) {
-          setData({
-            dressCode: config.dressCode,
-            dressDescription: config.dressDescription,
-            cbu: config.cbu,
-            alias: config.alias,
-            bankName: config.bankName,
-            holderName: config.holderName
-          });
-        }
-      } catch (error) {
-        console.error("Error cargando detalles:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadConfig();
-  }, []);
 
   return (
     <section className="relative bg-black pt-32 pb-48 md:pt-48 md:pb-64 overflow-hidden">
@@ -101,73 +84,43 @@ export function Details() {
           <path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5,73.84-4.36,147.54,16.88,218.2,35.26,69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="#ffffff"></path>
         </svg>
       </div>
-   {/* Fondo de Ondas Animadas */}
-      <div className="absolute inset-0 z-0 opacity-40">
-        <svg
-          viewBox="0 0 1440 320"
-          className="absolute bottom-0 w-full h-full preserve-3d"
-          preserveAspectRatio="none"
-        >
-          <motion.path
-            initial={{ d: "M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,144C672,139,768,181,864,202.7C960,224,1056,224,1152,202.7C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" }}
-            animate={{ 
-              d: [
-                "M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,144C672,139,768,181,864,202.7C960,224,1056,224,1152,202.7C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                "M0,192L48,176C96,160,192,128,288,138.7C384,149,480,203,576,224C672,245,768,235,864,208C960,181,1056,139,1152,122.7C1248,107,1344,117,1392,122.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-                "M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,144C672,139,768,181,864,202.7C960,224,1056,224,1152,202.7C1248,181,1344,139,1392,117.3L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-              ]
-            }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-            fill="#1a1a1a"
-          />
-        </svg>
-      </div>
+
       <div className="container mx-auto px-6 relative z-20 text-center">
-        {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-white/20" />
-          </div>
-        ) : (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="mb-20"
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mb-20"
+          >
+            <p className="font-serif italic text-4xl md:text-6xl text-white mb-3 tracking-tight">Te cuento</p>
+            <p className="text-white/60 tracking-[0.4em] text-[10px] md:text-xs uppercase font-light">todos los detalles</p>
+          </motion.div>
+
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-12 md:gap-20">
+            <motion.button
+              whileHover={{ y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setActiveModal("dress")}
+              className="flex flex-col items-center gap-4 group"
             >
-              <p className="font-serif italic text-4xl md:text-6xl text-white mb-3 tracking-tight">Te cuento</p>
-              <p className="text-white/60 tracking-[0.4em] text-[10px] md:text-xs uppercase font-light">todos los detalles</p>
-            </motion.div>
+              <div className="w-24 h-24 rounded-full border border-white/10 flex items-center justify-center group-hover:border-white/40 group-hover:bg-white/5 transition-all duration-500">
+                <Shirt className="w-10 h-10 text-white stroke-[1px]" />
+              </div>
+              <span className="text-white tracking-[0.4em] text-[10px] uppercase font-light group-hover:text-white/100 transition-colors">Dress Code</span>
+            </motion.button>
 
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-12 md:gap-20">
-              {/* Dress Code Trigger */}
-              <motion.button
-                whileHover={{ y: -5 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveModal("dress")}
-                className="flex flex-col items-center gap-4 group"
-              >
-                <div className="w-24 h-24 rounded-full border border-white/10 flex items-center justify-center group-hover:border-white/40 group-hover:bg-white/5 transition-all duration-500">
-                  <Shirt className="w-10 h-10 text-white stroke-[1px]" />
-                </div>
-                <span className="text-white tracking-[0.4em] text-[10px] uppercase font-light group-hover:text-white/100 transition-colors">Dress Code</span>
-              </motion.button>
-
-              {/* Regalo Trigger */}
-              <motion.button
-                whileHover={{ y: -5 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveModal("gift")}
-                className="flex flex-col items-center gap-4 group"
-              >
-                <div className="w-24 h-24 rounded-full border border-white/10 flex items-center justify-center group-hover:border-white/40 group-hover:bg-white/5 transition-all duration-500">
-                  <Gift className="w-10 h-10 text-white stroke-[1px]" />
-                </div>
-                <span className="text-white tracking-[0.4em] text-[10px] uppercase font-light group-hover:text-white/100 transition-colors">Regalos</span>
-              </motion.button>
-            </div>
-          </>
-        )}
+            <motion.button
+              whileHover={{ y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setActiveModal("gift")}
+              className="flex flex-col items-center gap-4 group"
+            >
+              <div className="w-24 h-24 rounded-full border border-white/10 flex items-center justify-center group-hover:border-white/40 group-hover:bg-white/5 transition-all duration-500">
+                <Gift className="w-10 h-10 text-white stroke-[1px]" />
+              </div>
+              <span className="text-white tracking-[0.4em] text-[10px] uppercase font-light group-hover:text-white/100 transition-colors">Regalos</span>
+            </motion.button>
+          </div>
       </div>
 
       {/* ONDA INFERIOR */}
@@ -182,27 +135,26 @@ export function Details() {
         </svg>
       </div>
 
-      {/* --- MODALES DINÁMICOS DESDE LA DB --- */}
-      
-      {/* Modal Vestimenta */}
+      {/* Modales con datos de las props */}
       <DetailModal isOpen={activeModal === "dress"} onClose={() => setActiveModal(null)} title="Dress Code">
         <p className="text-lg">Para esta noche mágica, el estilo es <br />
-          <strong className="text-black font-semibold uppercase tracking-widest text-xl block mt-2 italic">{data.dressCode}</strong>
+          <strong className="text-black font-semibold uppercase tracking-widest text-xl block mt-2 italic">
+            {dressCode || "Elegante"}
+          </strong>
         </p>
-        <p className="mt-4 text-sm italic text-black/60">{data.dressDescription}</p>
+        <p className="mt-4 text-sm italic text-black/60">{dressDescription}</p>
       </DetailModal>
 
-      {/* Modal Regalos */}
       <DetailModal isOpen={activeModal === "gift"} onClose={() => setActiveModal(null)} title="Regalos">
         <p className="mb-8 italic">Tu presencia es mi mayor alegría. Pero si deseas hacerme un presente, podés usar estos datos:</p>
         <div className="space-y-3">
           <div className="bg-black/5 p-4 rounded-2xl">
             <p className="text-[10px] uppercase tracking-[0.2em] text-black/40 mb-1">Titular</p>
-            <p className="text-black font-semibold text-lg">{data.holderName}</p>
+            <p className="text-black font-semibold text-lg">{holderName || "Luz Jazmín"}</p>
           </div>
-          <CopyButton label="CBU/CVU" text={data.cbu} />
-          <CopyButton label="Alias" text={data.alias} />
-          <p className="text-xs italic text-black/40 mt-4 tracking-widest uppercase">{data.bankName}</p>
+          <CopyButton label="CBU/CVU" text={cbu || ""} />
+          <CopyButton label="Alias" text={alias || ""} />
+          <p className="text-xs italic text-black/40 mt-4 tracking-widest uppercase">{bankName}</p>
         </div>
       </DetailModal>
 

@@ -1,8 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { getEventConfig } from "@/app/api/admin/count/route"; // Importamos la acción del servidor
+import { useEffect, useState, useMemo } from "react";
+
+// 1. Definimos las props que vienen del padre
+interface CountdownProps {
+  eventDate?: string | null;
+  eventTime?: string | null;
+}
 
 function CountdownUnit({ value, label }: { value: number; label: string }) {
   return (
@@ -17,53 +22,44 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
   );
 }
 
-export function Countdown() {
+export function Countdown({ eventDate, eventTime }: CountdownProps) {
   const [mounted, setMounted] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [formattedDate, setFormattedDate] = useState("");
+
+  // Valores finales (DB o Fallback)
+  const finalDate = eventDate || "2026-12-19";
+  const finalTime = eventTime || "21:00";
+
+  // 2. Formateamos la fecha para el texto (se calcula una sola vez)
+  const formattedDate = useMemo(() => {
+    const dateParts = finalDate.split("-");
+    const dateForText = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]));
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+    return dateForText.toLocaleDateString('es-ES', options).toUpperCase();
+  }, [finalDate]);
 
   useEffect(() => {
     setMounted(true);
 
-    async function initCountdown() {
-      // 1. Obtener datos de la Base de Datos
-      const config = await getEventConfig();
-      
-      // Valores por defecto por si la DB está vacía aún
-      const finalDate = config?.eventDate || "2026-12-19";
-      const finalTime = config?.eventTime || "21:00";
+    const timer = setInterval(() => {
+      const target = new Date(`${finalDate}T${finalTime}:00`).getTime();
+      const now = new Date().getTime();
+      const diff = target - now;
 
-      // 2. Formatear la fecha para el texto (Ej: 19 DE DICIEMBRE DE 2026)
-      // Usamos el reemplazo de guiones para evitar problemas de desfase horario en navegadores
-      const dateParts = finalDate.split("-");
-      const dateForText = new Date(Number(dateParts[0]), Number(dateParts[1]) - 1, Number(dateParts[2]));
-      
-      const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-      setFormattedDate(dateForText.toLocaleDateString('es-ES', options).toUpperCase());
+      if (diff > 0) {
+        setTimeLeft({
+          days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((diff / 1000 / 60) % 60),
+          seconds: Math.floor((diff / 1000) % 60),
+        });
+      } else {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      }
+    }, 1000);
 
-      // 3. Iniciar el intervalo del reloj
-      const timer = setInterval(() => {
-        const target = new Date(`${finalDate}T${finalTime}:00`).getTime();
-        const now = new Date().getTime();
-        const diff = target - now;
-
-        if (diff > 0) {
-          setTimeLeft({
-            days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-            hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-            minutes: Math.floor((diff / 1000 / 60) % 60),
-            seconds: Math.floor((diff / 1000) % 60),
-          });
-        } else {
-          setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        }
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-
-    initCountdown();
-  }, []);
+    return () => clearInterval(timer);
+  }, [finalDate, finalTime]);
 
   if (!mounted) return null;
 
@@ -71,14 +67,13 @@ export function Countdown() {
     <section className="relative bg-black pt-16 pb-32 md:pb-48 overflow-hidden">
       <div className="container mx-auto px-4 relative z-10 text-center">
         
-        {/* Textos superiores */}
         <div className="mb-14 space-y-3">
           <motion.p 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-white tracking-[0.4em] text-[10px] md:text-xs uppercase font-light"
           >
-            {formattedDate || "CARGANDO FECHA..."}
+            {formattedDate}
           </motion.p>
           <p className="font-serif italic text-xl md:text-2xl text-white opacity-80">
             ¡La fiesta del año!
@@ -88,7 +83,6 @@ export function Countdown() {
           </div>
         </div>
 
-        {/* Contador */}
         <div className="flex justify-center items-center gap-4 md:gap-10">
           <CountdownUnit value={timeLeft.days} label="Días" />
           <CountdownUnit value={timeLeft.hours} label="Horas" />
@@ -97,7 +91,6 @@ export function Countdown() {
         </div>
       </div>
 
-      {/* Separador de Onda */}
       <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
         <svg 
           viewBox="0 0 1200 120" 

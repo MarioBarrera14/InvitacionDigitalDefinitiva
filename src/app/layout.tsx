@@ -4,14 +4,8 @@ import ClientBody from "./ClientBody";
 import Script from "next/script";
 
 export const metadata: Metadata = {
-  title: "Delfi - ¡MIS XV! | Invitación Digital",
-  description: "Te invito a celebrar conmigo mis XV años. 19 de diciembre de 2026 - ¡La fiesta del año!",
-  keywords: ["invitación", "XV años", "quinceañera", "fiesta", "celebración"],
-  openGraph: {
-    title: "Delfi - ¡MIS XV!",
-    description: "Te invito a celebrar conmigo mis XV años",
-    type: "website",
-  },
+  title: "¡MIS XV! | Invitación Digital",
+  description: "Te invito a celebrar conmigo mis XV años",
 };
 
 export default function RootLayout({
@@ -20,7 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    // Añadimos suppressHydrationWarning para evitar errores por extensiones
+    <html lang="es" suppressHydrationWarning>
       <head>
         <Script
           crossOrigin="anonymous"
@@ -31,7 +26,8 @@ export default function RootLayout({
           src="//unpkg.com/same-runtime/dist/index.global.js"
         />
       </head>
-      <body suppressHydrationWarning className="antialiased">
+      {/* El body debe estar presente para evitar el Runtime Error */}
+      <body className="antialiased">
         <ClientBody>{children}</ClientBody>
       </body>
     </html>

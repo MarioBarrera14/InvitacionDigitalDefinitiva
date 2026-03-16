@@ -13,14 +13,22 @@ export async function POST(request: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Determinamos si es video o imagen para la carpeta
-    const folder = file.type.includes('video') ? 'boda/videos' : 'boda/fotos';
+    // 1. DETERMINAMOS LA CARPETA SEGÚN EL TIPO MIME
+    let folder = 'boda/fotos'; // Por defecto fotos
 
+    if (file.type.includes('video')) {
+      folder = 'boda/videos';
+    } else if (file.type.includes('audio') || file.name.endsWith('.mp3')) {
+      folder = 'boda/musica'; // Nueva carpeta para los audios de la invitación
+    }
+
+    // 2. SUBIMOS A CLOUDINARY
+    // Nota: Cloudinary maneja internamente si es 'image', 'video' o 'raw' (audio)
     const result = await uploadToCloudinary(
       buffer,
       file.name,
       folder,
-      file.type // Pasamos el tipo de archivo
+      file.type 
     );
 
     return NextResponse.json({

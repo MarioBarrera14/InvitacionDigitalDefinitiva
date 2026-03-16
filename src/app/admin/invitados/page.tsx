@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { TicketPlus, Copy, Trash2, Loader2, CheckCircle2, XCircle, Clock, Users, Mail, Utensils } from "lucide-react";
+import Swal from "sweetalert2";
 
 export default function GestionInvitados() {
   const [apellido, setApellido] = useState("");
@@ -57,21 +58,57 @@ export default function GestionInvitados() {
         setListaInvitados([guardado, ...listaInvitados]);
         setApellido("");
         setCupos(1);
+        
+        Swal.fire({
+          title: "¡Generado!",
+          text: "Pase creado correctamente",
+          icon: "success",
+          confirmButtonColor: "#18181b",
+          timer: 2000
+        });
       }
     } catch (error) {
-      alert("Error de conexión");
+      Swal.fire("Error", "No se pudo conectar con el servidor", "error");
     } finally {
       setCargando(false);
     }
   };
 
+  // --- CONFIGURACIÓN DE SWEETALERT ELIMINAR ---
   const eliminarInvitado = async (id: string) => {
-    if (!confirm("¿Eliminar a este invitado?")) return;
-    try {
-      const response = await fetch(`/api/guests?id=${id}`, { method: "DELETE" });
-      if (response.ok) setListaInvitados(listaInvitados.filter((inv) => inv.id !== id));
-    } catch (error) {
-      alert("No se pudo eliminar");
+    const swalEstilo = Swal.mixin({
+      customClass: {
+        confirmButton: "bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest ml-3",
+        cancelButton: "bg-zinc-100 hover:bg-zinc-200 text-zinc-500 px-6 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest"
+      },
+      buttonsStyling: false
+    });
+
+    const result = await swalEstilo.fire({
+      title: "¿Eliminar invitado?",
+      text: "Esta acción no se puede deshacer",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`/api/guests?id=${id}`, { method: "DELETE" });
+        if (response.ok) {
+          setListaInvitados(listaInvitados.filter((inv) => inv.id !== id));
+          swalEstilo.fire({
+            title: "Eliminado",
+            text: "El invitado ha sido quitado de la lista.",
+            icon: "success",
+            confirmButtonColor: "#18181b"
+          });
+        }
+      } catch (error) {
+        swalEstilo.fire("Error", "No se pudo eliminar al invitado", "error");
+      }
     }
   };
 
@@ -144,7 +181,6 @@ export default function GestionInvitados() {
 
       {/* TABLA / LISTADO */}
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-zinc-100 overflow-hidden">
-        {/* Desktop */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-zinc-50/50">
@@ -170,7 +206,6 @@ export default function GestionInvitados() {
                   <td className="p-6 text-center font-black text-zinc-400 text-sm">{inv.cupos}</td>
                   <td className="p-6 text-center">{renderStatus(inv.status)}</td>
                   <td className="p-6 text-center">
-                    {/* CODIGO CORREGIDO: NEGRO Y VISIBLE */}
                     <button 
                       onClick={() => copiarCodigo(inv.codigo)} 
                       className="inline-flex items-center gap-2 font-mono font-bold bg-zinc-100 text-zinc-900 px-4 py-2 rounded-xl border border-zinc-200 hover:bg-black hover:text-white hover:border-black transition-all group/code shadow-sm"

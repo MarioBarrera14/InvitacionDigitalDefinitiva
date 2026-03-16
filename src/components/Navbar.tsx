@@ -1,24 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react"; // IMPORTACIÓN FALTANTE
 import Link from "next/link";
 import { Heart, LayoutDashboard } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { eventConfig } from "../data/event-config"; // IMPORTACIÓN FALTANTE
+import { eventConfig as localConfig } from "../data/event-config";
 
-export const Navbar = () => {
+// Agregamos la interfaz para recibir el nombre
+interface NavbarProps {
+  eventName?: string | null;
+}
+
+export const Navbar = ({ eventName }: NavbarProps) => {
   const router = useRouter();
-  const { personal } = eventConfig;
 
-  // Estado para el nombre dinámico
-  const [displayName, setDisplayName] = useState(personal.nombre);
-
-  useEffect(() => {
-    const savedName = localStorage.getItem("eventName");
-    if (savedName) {
-      setDisplayName(savedName);
-    }
-  }, []);
+  // Prioridad: DB > Archivo Local
+  const displayName = eventName || localConfig.personal.nombre;
 
   const goToDashboard = () => {
     router.push("/admin");
@@ -31,7 +27,6 @@ export const Navbar = () => {
         {/* NOMBRE DINÁMICO */}
         <Link href="/" className="group">
           <h1 className="text-white text-xl font-serif italic tracking-widest transition-colors group-hover:text-pink-300">
-            {/* Aquí usamos el displayName directamente para que cambie de verdad */}
             {displayName}
           </h1>
           <span className="block text-[9px] uppercase tracking-[0.3em] font-sans not-italic text-zinc-400">

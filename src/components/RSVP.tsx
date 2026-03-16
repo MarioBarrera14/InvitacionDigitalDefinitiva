@@ -21,6 +21,30 @@ export function RSVP() {
     message: "",
   });
 
+  // --- FUNCIÓN PARA RESETEAR TODO EL ESTADO ---
+  const resetAll = () => {
+    setIsValidated(false);
+    setAlreadyResponded(false);
+    setFamilyCode("");
+    setErrorMessage("");
+    setGuestInfo(null);
+    setFormData({
+      name: "",
+      attendance: "",
+      dietary: [],
+      message: "",
+    });
+  };
+
+  // Función para cerrar y limpiar
+  const handleClose = () => {
+    if (!isSubmitting) {
+      setIsOpen(false);
+      // Usamos un pequeño timeout para que la animación de salida termine antes de resetear visualmente
+      setTimeout(resetAll, 300);
+    }
+  };
+
   const handleValidateCode = async () => {
     if (!familyCode) return;
     setIsSubmitting(true);
@@ -133,7 +157,7 @@ export function RSVP() {
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => !isSubmitting && setIsOpen(false)}
+              onClick={handleClose}
               className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             />
 
@@ -142,9 +166,8 @@ export function RSVP() {
               className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-zinc-100"
             >
               {!isValidated ? (
-                // --- VISTA DE VALIDACIÓN (CÓDIGO) ---
                 <div className="p-10 text-center">
-                   <button onClick={() => setIsOpen(false)} className="absolute right-8 top-8 text-zinc-300 hover:text-black transition-colors">
+                   <button onClick={handleClose} className="absolute right-8 top-8 text-zinc-300 hover:text-black transition-colors">
                     <X size={20} />
                   </button>
                   <KeyRound className="w-12 h-12 text-black/20 mx-auto mb-6" />
@@ -172,7 +195,6 @@ export function RSVP() {
                   </button>
                 </div>
               ) : alreadyResponded ? (
-                // --- VISTA DE ÉXITO ---
                 <div className="p-12 text-center">
                   <div className="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center text-black mx-auto mb-6 border border-zinc-100 shadow-inner">
                     <PartyPopper size={40} strokeWidth={1.5} />
@@ -181,16 +203,14 @@ export function RSVP() {
                   <p className="text-zinc-500 text-sm leading-relaxed mb-8 font-light">
                     Tu respuesta ya fue registrada. Estamos muy felices de compartir este día con vos.
                   </p>
-                  <button onClick={() => setIsOpen(false)} className="px-10 py-4 bg-black text-white rounded-full text-[10px] font-bold tracking-widest uppercase">
+                  <button onClick={handleClose} className="px-10 py-4 bg-black text-white rounded-full text-[10px] font-bold tracking-widest uppercase">
                     CERRAR
                   </button>
                 </div>
               ) : (
-                // --- VISTA DEL FORMULARIO PRINCIPAL (Estilo Imagen) ---
                 <div>
-                  {/* Encabezado Oscuro Estilo Imagen */}
                   <div className="bg-zinc-900 text-center py-10 px-8 relative">
-                    <button onClick={() => setIsOpen(false)} className="absolute right-6 top-6 text-zinc-500 hover:text-white transition-colors">
+                    <button onClick={handleClose} className="absolute right-6 top-6 text-zinc-500 hover:text-white transition-colors">
                       <X size={20} />
                     </button>
                     <p className="text-[8px] font-bold uppercase tracking-[0.4em] text-zinc-500 mb-2">Invitado / Familia</p>
@@ -201,7 +221,6 @@ export function RSVP() {
                   </div>
 
                   <div className="p-8 space-y-8 max-h-[65vh] overflow-y-auto custom-scrollbar">
-                    {/* Nombre */}
                     <div className="space-y-3">
                       <label className="text-[9px] font-bold tracking-widest uppercase text-zinc-400">Confirmado por:</label>
                       <input
@@ -213,7 +232,6 @@ export function RSVP() {
                       />
                     </div>
 
-                    {/* Botones de Asistencia */}
                     <div className="grid grid-cols-2 gap-4">
                       <button
                         onClick={() => setFormData({...formData, attendance: "YES"})}
@@ -229,7 +247,6 @@ export function RSVP() {
                       </button>
                     </div>
 
-                    {/* Menú */}
                     <div className="space-y-4">
                       <label className="text-[9px] font-bold tracking-widest uppercase text-zinc-400 block text-center">Preferencias de menú</label>
                       <div className="flex flex-wrap justify-center gap-2">
@@ -245,7 +262,6 @@ export function RSVP() {
                       </div>
                     </div>
 
-                    {/* Mensaje */}
                     <div className="bg-zinc-50 p-6 rounded-3xl space-y-3">
                       <label className="text-[9px] font-bold tracking-widest uppercase block text-zinc-400 flex items-center gap-2">
                         <MessageSquareHeart size={16} className="text-black" /> Un mensaje especial

@@ -16,8 +16,12 @@ export async function uploadToCloudinary(
   const base64File = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
   
-  // Determinamos el resource_type (image o video)
-  const resourceType = mimeType.includes('video') ? 'video' : 'image';
+  // MODIFICACIÓN AQUÍ:
+  // Cloudinary usa 'video' tanto para videos como para archivos de audio (mp3, wav, etc.)
+  let resourceType = 'image';
+  if (mimeType.includes('video') || mimeType.includes('audio')) {
+    resourceType = 'video';
+  }
 
   const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`, {
     method: 'POST',
@@ -26,14 +30,14 @@ export async function uploadToCloudinary(
       file: base64File,
       folder: folder,
       upload_preset: process.env.CLOUDINARY_UPLOAD_PRESET || 'ml_default', 
-      resource_type: resourceType, // <-- ESTO ES VITAL
+      resource_type: resourceType, 
     }),
   });
 
   const result = await response.json();
 
   if (!response.ok) {
-    console.error("Detalle error Cloudinary:", result); // Para debugear
+    console.error("Detalle error Cloudinary:", result);
     throw new Error(result.error?.message || 'Error en Cloudinary');
   }
 

@@ -9,62 +9,65 @@ import {
   Play,
   Volume2, 
   VolumeX, 
-  Clapperboard,
-  Loader2 
+  Clapperboard
 } from "lucide-react";
-import { getEventConfig } from "@/app/api/admin/galeria/route"; 
-import { eventConfig } from "../data/event-config";
+import { eventConfig as localConfig } from "../data/event-config";
 
-export function FotoCarousel() {
-  const { imagenes } = eventConfig;
+// 1. Definimos las props que vienen del servidor
+interface FotoCarouselProps {
+  images?: string | null; // El JSON de la base de datos
+  videoUrl?: string | null;
+}
+
+export function FotoCarousel({ images, videoUrl }: FotoCarouselProps) {
+  const { imagenes: localImagenes } = localConfig;
   const [index, setIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [loading, setLoading] = useState(true);
   
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const [fotos, setFotos] = useState([
-    { id: 1, url: imagenes.hero, caption: "Comenzando el sueño" },
-    { id: 2, url: "/img/foto2.jpg", caption: "Detalles que ilusionan" },
-    { id: 3, url: "/img/foto3.jpg", caption: "Cada vez más cerca" },
-    { id: 4, url: "/img/foto4.jpg", caption: "Mi sesión especial" },
-    { id: 5, url: "/img/foto5.jpg", caption: "Preparando la magia" },
-  ]);
-
-  useEffect(() => {
-    async function loadMedia() {
-      try {
-        const config = await getEventConfig();
-        if (config) {
-          if (config.videoUrl) setVideoUrl(config.videoUrl);
-          if (config.carruselImages) {
-            const urls = JSON.parse(config.carruselImages);
-            setFotos(prev => urls.map((url: string | null, i: number) => ({
-              ...prev[i],
-              url: url || prev[i].url
-            })));
-          }
-        }
-      } catch (error) {
-        console.error("Error cargando galería:", error);
-      } finally {
-        setLoading(false);
+  // 2. Procesamos las imágenes: Si hay en DB (JSON), las usamos. Si no, las locales.
+  const fotos = (() => {
+    try {
+      if (images) {
+        const urls = JSON.parse(images);
+        const captions = [
+          "Comenzando el sueño", 
+          "Detalles que ilusionan", 
+          "Cada vez más cerca", 
+          "Mi sesión especial", 
+          "Preparando la magia"
+        ];
+        return urls.map((url: string, i: number) => ({
+          id: i,
+          url: url || localImagenes.hero,
+          caption: captions[i] || "Momento especial"
+        }));
       }
+    } catch (e) {
+      console.error("Error parseando imágenes:", e);
     }
-    loadMedia();
-  }, []);
+    // Fallback si no hay fotos en DB
+    return [
+      { id: 1, url: localImagenes.hero, caption: "Comenzando el sueño" },
+      { id: 2, url: "/img/foto2.jpg", caption: "Detalles que ilusionan" },
+      { id: 3, url: "/img/foto3.jpg", caption: "Cada vez más cerca" },
+      { id: 4, url: "/img/foto4.jpg", caption: "Mi sesión especial" },
+      { id: 5, url: "/img/foto5.jpg", caption: "Preparando la magia" },
+    ];
+  })();
 
+  // 3. Auto-reproducción del carrusel (Sin el fetch)
   useEffect(() => {
-    if (!isHovered && !loading) {
+    if (!isHovered) {
       const interval = setInterval(() => {
         nextStep();
       }, 3000);
       return () => clearInterval(interval);
     }
-  }, [index, isHovered, loading]);
+  }, [index, isHovered]);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -81,14 +84,9 @@ export function FotoCarousel() {
   const nextStep = () => setIndex((prev) => (prev === fotos.length - 1 ? 0 : prev + 1));
   const prevStep = () => setIndex((prev) => (prev === 0 ? fotos.length - 1 : prev - 1));
 
-  if (loading) return (
-    <div className="py-24 flex justify-center items-center bg-[#fdfdfd]">
-       <Loader2 className="animate-spin text-rose-300 w-8 h-8" />
-    </div>
-  );
-
   return (
     <section className="relative py-24 md:py-32 bg-[#fdfdfd] overflow-hidden">
+      {/* Fondos decorativos */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
         <div className="absolute top-[10%] -right-[5%] w-96 h-96 bg-rose-50 rounded-full blur-3xl" />
         <div className="absolute bottom-[10%] -left-[5%] w-72 h-72 bg-neutral-100 rounded-full blur-3xl" />
@@ -118,11 +116,7 @@ export function FotoCarousel() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-start max-w-6xl mx-auto">
           
           {/* COLUMNA FOTOS */}
-          <div 
-            className="w-full relative group"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
+          <div className="w-full relative group" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
             <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-neutral-100 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)]">
               <AnimatePresence mode="wait">
                 <motion.img
@@ -158,18 +152,13 @@ export function FotoCarousel() {
                   <div className="absolute inset-0 opacity-30 blur-2xl scale-110">
                     <video src={videoUrl} className="w-full h-full object-cover" muted loop autoPlay playsInline />
                   </div>
-
                   <video
                     ref={videoRef}
                     src={videoUrl}
                     className="relative z-10 w-full h-full object-contain cursor-pointer" 
-                    loop 
-                    muted={isMuted}
-                    autoPlay
-                    playsInline
+                    loop muted={isMuted} autoPlay playsInline
                     onClick={togglePlay}
                   />
-                  
                   <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 z-30">
                     <div className="flex items-center justify-between">
                       <div className="flex gap-2">
@@ -186,17 +175,15 @@ export function FotoCarousel() {
                 </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-neutral-500 text-[10px] tracking-widest uppercase text-center px-6 italic">
-                  Cargando video...
+                  Próximamente el video...
                 </div>
               )}
             </div>
-
             <div className="mt-8 text-center space-y-2">
               <span className="text-[10px] tracking-[0.4em] text-rose-300 uppercase font-semibold italic">Video destacado</span>
               <h4 className="text-4xl font-serif italic text-neutral-800">Backstage</h4>
             </div>
           </div>
-
         </div>
       </div>
     </section>

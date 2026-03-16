@@ -25,6 +25,7 @@ model EventConfig {
   id               Int      @id @default(1) // Siempre usaremos el ID 1
   heroImage        String?  @default("")
   videoUrl         String?  @default("")
+  musicUrl         String?  @default("")
   carruselImages   String?  @default("[]")
   // Datos del Formulario "CountConfigPage"
   eventName        String   @default("Luz Jazmín")
