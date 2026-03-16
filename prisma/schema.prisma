@@ -47,3 +47,11 @@ model EventConfig {
 
   @@map("event_config")
 }
+
+model User {
+  id        String   @id @default(cuid())
+  nombre    String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}

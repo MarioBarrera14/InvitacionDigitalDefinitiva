@@ -1,10 +1,63 @@
 "use client";
 
-import React from "react";
-import { Heart, User, Lock, Mail, ArrowLeft } from "lucide-react";
+import React, { useState } from "react";
+import { Heart, User, Lock, Mail, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const [cargando, setCargando] = useState(false);
+  
+  // 1. Estado para capturar los datos
+  const [formData, setFormData] = useState({
+    nombre: "",
+    email: "",
+    password: "",
+  });
+
+  // 2. Función para manejar el envío
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (cargando) return;
+
+    setCargando(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        await Swal.fire({
+          title: '<span style="font-family: serif; font-style: italic;">¡Bienvenido!</span>',
+          text: "Cuenta creada con éxito. Ahora puedes iniciar sesión.",
+          icon: "success",
+          confirmButtonColor: "#ec4899",
+          customClass: { popup: 'rounded-[2rem]' }
+        });
+        router.push("/users"); // Te lleva al login
+      } else {
+        throw new Error(data.error || "Error al registrar");
+      }
+    } catch (error: any) {
+      Swal.fire({
+        title: "Error",
+        text: error.message,
+        icon: "error",
+        confirmButtonColor: "#18181b",
+        customClass: { popup: 'rounded-[2rem]' }
+      });
+    } finally {
+      setCargando(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 sm:p-6">
       <Link 
@@ -17,7 +70,6 @@ export default function RegisterPage() {
       <div className="w-full max-w-[400px] bg-zinc-900/50 border border-pink-500/20 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] backdrop-blur-xl shadow-2xl relative overflow-hidden">
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl"></div>
         
-        {/* Encabezado Responsive */}
         <div className="flex flex-col items-center mb-8 sm:mb-10">
           <div className="relative">
             <Heart className="w-12 h-12 sm:w-16 sm:h-16 text-pink-500 fill-pink-500 animate-pulse opacity-20 absolute blur-lg" />
@@ -27,14 +79,18 @@ export default function RegisterPage() {
           <p className="text-zinc-500 text-[8px] sm:text-[10px] uppercase tracking-[0.4em] mt-2 text-center">Luz Jazmín • Mis XV</p>
         </div>
 
-        <form className="space-y-3 sm:space-y-4" onSubmit={(e) => e.preventDefault()}>
+        {/* 3. Conectar el Formulario */}
+        <form className="space-y-3 sm:space-y-4" onSubmit={handleRegister}>
           <div className="space-y-1">
             <label className="text-[9px] sm:text-[10px] uppercase tracking-widest text-zinc-400 ml-4">Nombre Completo</label>
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-400/50" />
               <input 
+                required
                 type="text" 
                 placeholder="Ej: Juan Pérez"
+                value={formData.nombre}
+                onChange={(e) => setFormData({...formData, nombre: e.target.value})}
                 className="w-full bg-black/40 border border-zinc-800 rounded-full py-2.5 sm:py-3 pl-12 pr-6 text-xs sm:text-sm text-white focus:outline-none focus:border-pink-500/50 transition-all placeholder:text-zinc-700"
               />
             </div>
@@ -45,8 +101,11 @@ export default function RegisterPage() {
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-400/50" />
               <input 
+                required
                 type="email" 
                 placeholder="invitado@ejemplo.com"
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
                 className="w-full bg-black/40 border border-zinc-800 rounded-full py-2.5 sm:py-3 pl-12 pr-6 text-xs sm:text-sm text-white focus:outline-none focus:border-pink-500/50 transition-all placeholder:text-zinc-700"
               />
             </div>
@@ -57,27 +116,35 @@ export default function RegisterPage() {
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-pink-400/50" />
               <input 
+                required
                 type="password" 
                 placeholder="Crea una contraseña"
+                value={formData.password}
+                onChange={(e) => setFormData({...formData, password: e.target.value})}
                 className="w-full bg-black/40 border border-zinc-800 rounded-full py-2.5 sm:py-3 pl-12 pr-6 text-xs sm:text-sm text-white focus:outline-none focus:border-pink-500/50 transition-all placeholder:text-zinc-700"
               />
             </div>
           </div>
 
-          <button className="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-bold py-3.5 sm:py-4 rounded-full shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 mt-4 sm:mt-6">
-            REGISTRARME <Heart className="w-4 h-4 fill-white" />
+          <button 
+            type="submit"
+            disabled={cargando}
+            className="w-full bg-gradient-to-r from-pink-500 to-rose-600 text-white font-bold py-3.5 sm:py-4 rounded-full shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 mt-4 sm:mt-6 disabled:opacity-50"
+          >
+            {cargando ? (
+              <Loader2 className="animate-spin w-5 h-5" />
+            ) : (
+              <>REGISTRARME <Heart className="w-4 h-4 fill-white" /></>
+            )}
           </button>
         </form>
 
         <div className="mt-6 sm:mt-8 text-center">
           <p className="text-zinc-500 text-[11px] sm:text-xs">
             ¿Ya tienes cuenta?{" "}
-            <Link 
-      href="/users" // <-- Cambia esto por la ruta real de tu login
-      className="text-pink-400 hover:underline font-medium"
-    >
-      Inicia sesión aquí
-    </Link>
+            <Link href="/users" className="text-pink-400 hover:underline font-medium">
+              Inicia sesión aquí
+            </Link>
           </p>
         </div>
       </div>

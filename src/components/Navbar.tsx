@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, LayoutDashboard, Users } from "lucide-react"; // Importamos Users
+import { Heart, LayoutDashboard, Users, LogOut } from "lucide-react"; 
 import { useRouter } from "next/navigation";
 import { eventConfig as localConfig } from "../data/event-config";
+import { useSession, signOut } from "next-auth/react";
 
 interface NavbarProps {
   eventName?: string | null;
@@ -11,6 +12,7 @@ interface NavbarProps {
 
 export const Navbar = ({ eventName }: NavbarProps) => {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const displayName = eventName || localConfig.personal.nombre;
 
   return (
@@ -28,39 +30,62 @@ export const Navbar = ({ eventName }: NavbarProps) => {
         </Link>
 
         {/* CONTENEDOR DE ACCESO */}
-        <div className="flex items-center gap-6"> {/* Aumentamos un poco el gap */}
+        <div className="flex items-center gap-6"> 
           
-          {/* BOTÓN DASHBOARD (GENERAL) */}
-          <div className="flex flex-col items-center gap-0.5">
-            <button 
-              onClick={() => router.push("/admin")}
-              className="group relative flex items-center justify-center w-10 h-10 
-                         bg-white/5 border border-white/10 hover:border-pink-400/50
-                         rounded-full text-white transition-all duration-300
-                         hover:bg-pink-400/10 hover:scale-110 active:scale-95"
-            >
-              <LayoutDashboard className="w-4 h-4 text-zinc-400 group-hover:text-pink-400 transition-colors" />
-            </button>
-            <span className="text-[7px] uppercase tracking-[0.2em] font-bold text-zinc-500">
-              Admin
-            </span>
-          </div>
+          {/* 1. BOTÓN USUARIOS (LOGIN) - SOLO VISIBLE SI NO ESTÁ LOGUEADA */}
+          {status === "unauthenticated" && (
+            <div className="flex flex-col items-center gap-0.5 animate-in fade-in duration-500">
+              <button 
+                onClick={() => router.push("/users")}
+                className="group relative flex items-center justify-center w-10 h-10 
+                           bg-white/5 border border-white/10 hover:border-indigo-400/50
+                           rounded-full text-white transition-all duration-300
+                           hover:bg-indigo-400/10 hover:scale-110 active:scale-95"
+              >
+                <Users className="w-4 h-4 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
+              </button>
+              <span className="text-[7px] uppercase tracking-[0.2em] font-bold text-zinc-500">
+                Ingresar
+              </span>
+            </div>
+          )}
 
-      {/* BOTÓN USUARIOS */}
-<div className="flex flex-col items-center gap-0.5">
-  <button 
-    onClick={() => router.push("/users")} // <--- Cambiado de /admin/users a /users
-    className="group relative flex items-center justify-center w-10 h-10 
-               bg-white/5 border border-white/10 hover:border-indigo-400/50
-               rounded-full text-white transition-all duration-300
-               hover:bg-indigo-400/10 hover:scale-110 active:scale-95"
-  >
-    <Users className="w-4 h-4 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
-  </button>
-  <span className="text-[7px] uppercase tracking-[0.2em] font-bold text-zinc-500">
-    Users
-  </span>
-</div>
+          {/* 2. BOTONES SOLO PARA CUANDO ESTÁ LOGUEADA */}
+          {status === "authenticated" && (
+            <>
+              {/* BOTÓN DASHBOARD (ADMIN) */}
+              <div className="flex flex-col items-center gap-0.5 animate-in slide-in-from-right-4 duration-500">
+                <button 
+                  onClick={() => router.push("/admin")}
+                  className="group relative flex items-center justify-center w-10 h-10 
+                             bg-white/5 border border-white/10 hover:border-pink-400/50
+                             rounded-full text-white transition-all duration-300
+                             hover:bg-pink-400/10 hover:scale-110 active:scale-95"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-zinc-400 group-hover:text-pink-400 transition-colors" />
+                </button>
+                <span className="text-[7px] uppercase tracking-[0.2em] font-bold text-zinc-500">
+                  Admin
+                </span>
+              </div>
+
+              {/* BOTÓN SALIR */}
+              <div className="flex flex-col items-center gap-0.5 animate-in slide-in-from-right-2 duration-500">
+                <button 
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="group relative flex items-center justify-center w-10 h-10 
+                             bg-white/5 border border-white/10 hover:border-red-400/50
+                             rounded-full text-white transition-all duration-300
+                             hover:bg-red-400/10 hover:scale-110 active:scale-95"
+                >
+                  <LogOut className="w-4 h-4 text-zinc-400 group-hover:text-red-400 transition-colors" />
+                </button>
+                <span className="text-[7px] uppercase tracking-[0.2em] font-bold text-zinc-500">
+                  Salir
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </nav>
