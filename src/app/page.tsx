@@ -28,7 +28,7 @@ export default async function Home() {
         
         {/* 2. HERO: También usa eventName */}
         <Hero 
-          eventName={config.eventName || "Nuestra Boda"} 
+          eventName={config.eventName || "Luz Jazmin"} 
           heroImage={config.heroImage} 
         />
 

@@ -8,7 +8,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 sm:p-6">
       <Link 
-        href="/admin/users" 
+        href="/users" 
         className="absolute top-4 left-4 sm:top-6 sm:left-6 text-zinc-500 hover:text-pink-400 transition-colors flex items-center gap-2 text-xs sm:text-sm"
       >
         <ArrowLeft className="w-4 h-4" /> Volver al Login
@@ -72,9 +72,12 @@ export default function RegisterPage() {
         <div className="mt-6 sm:mt-8 text-center">
           <p className="text-zinc-500 text-[11px] sm:text-xs">
             ¿Ya tienes cuenta?{" "}
-            <Link href="/admin/users" className="text-pink-400 hover:underline font-medium">
-              Inicia sesión aquí
-            </Link>
+            <Link 
+      href="/users" // <-- Cambia esto por la ruta real de tu login
+      className="text-pink-400 hover:underline font-medium"
+    >
+      Inicia sesión aquí
+    </Link>
           </p>
         </div>
       </div>

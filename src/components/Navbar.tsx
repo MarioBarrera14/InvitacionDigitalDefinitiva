@@ -1,24 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, LayoutDashboard } from "lucide-react";
+import { Heart, LayoutDashboard, Users } from "lucide-react"; // Importamos Users
 import { useRouter } from "next/navigation";
 import { eventConfig as localConfig } from "../data/event-config";
 
-// Agregamos la interfaz para recibir el nombre
 interface NavbarProps {
   eventName?: string | null;
 }
 
 export const Navbar = ({ eventName }: NavbarProps) => {
   const router = useRouter();
-
-  // Prioridad: DB > Archivo Local
   const displayName = eventName || localConfig.personal.nombre;
-
-  const goToDashboard = () => {
-    router.push("/admin");
-  };
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-md border-b border-white/10 py-2.5 px-6">
@@ -35,10 +28,12 @@ export const Navbar = ({ eventName }: NavbarProps) => {
         </Link>
 
         {/* CONTENEDOR DE ACCESO */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6"> {/* Aumentamos un poco el gap */}
+          
+          {/* BOTÓN DASHBOARD (GENERAL) */}
           <div className="flex flex-col items-center gap-0.5">
             <button 
-              onClick={goToDashboard}
+              onClick={() => router.push("/admin")}
               className="group relative flex items-center justify-center w-10 h-10 
                          bg-white/5 border border-white/10 hover:border-pink-400/50
                          rounded-full text-white transition-all duration-300
@@ -51,20 +46,21 @@ export const Navbar = ({ eventName }: NavbarProps) => {
             </span>
           </div>
 
-          <div className="flex flex-col items-center gap-0.5">
-            <button 
-              onClick={() => router.push("/login")}
-              className="group relative flex items-center justify-center w-9 h-9 
-                         bg-gradient-to-br from-pink-400 to-rose-600 
-                         rounded-full text-white transition-all duration-300
-                         hover:scale-110 active:scale-95"
-            >
-              <Heart className="w-4 h-4 fill-white text-white group-hover:animate-pulse" />
-            </button>
-            <span className="text-[8px] uppercase tracking-[0.2em] font-semibold text-pink-400/90 italic">
-              Invitado
-            </span>
-          </div>
+      {/* BOTÓN USUARIOS */}
+<div className="flex flex-col items-center gap-0.5">
+  <button 
+    onClick={() => router.push("/users")} // <--- Cambiado de /admin/users a /users
+    className="group relative flex items-center justify-center w-10 h-10 
+               bg-white/5 border border-white/10 hover:border-indigo-400/50
+               rounded-full text-white transition-all duration-300
+               hover:bg-indigo-400/10 hover:scale-110 active:scale-95"
+  >
+    <Users className="w-4 h-4 text-zinc-400 group-hover:text-indigo-400 transition-colors" />
+  </button>
+  <span className="text-[7px] uppercase tracking-[0.2em] font-bold text-zinc-500">
+    Users
+  </span>
+</div>
         </div>
       </div>
     </nav>

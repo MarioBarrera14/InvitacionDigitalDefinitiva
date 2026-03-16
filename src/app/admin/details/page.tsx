@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, Gift, Shirt, Copy, Pencil, Loader2 } from "lucide-react";
+import { Save, Gift, Shirt, Pencil, Loader2, Trash2 } from "lucide-react";
 import { getEventConfig, updateEventDetails } from "@/app/api/admin/details/route";
 import Swal from "sweetalert2";
 
@@ -39,6 +39,32 @@ export default function DetailsConfigPage() {
     loadData();
   }, []);
 
+  // --- FUNCIÓN PARA LIMPIAR CAMPOS ---
+  const handleClear = () => {
+    Swal.fire({
+      title: "¿Limpiar detalles?",
+      text: "Se borrarán todos los campos de vestimenta y regalos del formulario.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "SÍ, LIMPIAR",
+      cancelButtonText: "CANCELAR",
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#18181b",
+      customClass: {
+        popup: 'rounded-3xl'
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setDressCode("");
+        setDressDescription("");
+        setCbu("");
+        setAlias("");
+        setBankName("");
+        setHolderName("");
+      }
+    });
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -58,7 +84,6 @@ export default function DetailsConfigPage() {
           icon: "success",
           timer: 2000,
           showConfirmButton: false,
-          confirmButtonColor: "#18181b",
           customClass: {
             popup: 'rounded-3xl'
           }
@@ -96,14 +121,26 @@ export default function DetailsConfigPage() {
           </h1>
           <p className="text-zinc-500 text-sm">Configura la vestimenta y datos de regalos</p>
         </div>
-        <button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105 transition-all shadow-md disabled:opacity-50"
-        >
-          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {isSaving ? "GUARDANDO..." : "GUARDAR"}
-        </button>
+        
+        {/* GRUPO DE ACCIONES */}
+        <div className="flex gap-2">
+          <button 
+            onClick={handleClear}
+            className="p-3 bg-zinc-100 dark:bg-slate-900 text-zinc-400 hover:text-red-500 rounded-2xl transition-all hover:bg-red-50"
+            title="Limpiar campos"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
+          
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className="bg-zinc-900 dark:bg-white text-white dark:text-black px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105 transition-all shadow-md disabled:opacity-50"
+          >
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {isSaving ? "GUARDANDO..." : "GUARDAR"}
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">

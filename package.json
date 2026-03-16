@@ -26,6 +26,7 @@
     "recharts": "^3.7.0",
     "same-runtime": "^0.0.1",
     "sweetalert2": "^11.26.22",
+    "sweetalert2-react-content": "^5.1.2",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7"
   },

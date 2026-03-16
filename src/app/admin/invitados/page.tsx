@@ -37,6 +37,12 @@ export default function GestionInvitados() {
     return `${prefijo}${randomNum}`;
   };
 
+  const handleClearForm = () => {
+    if (!apellido) return;
+    setApellido("");
+    setCupos(1);
+  };
+
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!apellido || cargando) return;
@@ -59,35 +65,48 @@ export default function GestionInvitados() {
         setApellido("");
         setCupos(1);
         
+        // --- ALERT GENERAR PASE (CORREGIDO) ---
         Swal.fire({
-          title: "¡Generado!",
-          text: "Pase creado correctamente",
+          title: '<span style="font-family: serif; font-style: italic; font-size: 1.5rem;">¡Pase Generado!</span>',
+          html: '<p style="color: #71717a; font-size: 0.875rem;">El invitado ha sido añadido a la lista correctamente. ✨</p>',
           icon: "success",
-          confirmButtonColor: "#18181b",
-          timer: 2000
+          iconColor: "#10b981",
+          showConfirmButton: false,
+          timer: 2500,
+          customClass: {
+            popup: 'rounded-[2rem] border border-zinc-100 shadow-2xl',
+          }
         });
       }
     } catch (error) {
-      Swal.fire("Error", "No se pudo conectar con el servidor", "error");
+      Swal.fire({
+        title: "Error",
+        text: "No se pudo conectar con el servidor",
+        icon: "error",
+        confirmButtonColor: "#18181b",
+        customClass: { popup: 'rounded-[2rem]' }
+      });
     } finally {
       setCargando(false);
     }
   };
 
-  // --- CONFIGURACIÓN DE SWEETALERT ELIMINAR ---
   const eliminarInvitado = async (id: string) => {
     const swalEstilo = Swal.mixin({
       customClass: {
+        popup: 'rounded-[2rem] border border-zinc-100 shadow-2xl',
         confirmButton: "bg-rose-500 hover:bg-rose-600 text-white px-6 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest ml-3",
         cancelButton: "bg-zinc-100 hover:bg-zinc-200 text-zinc-500 px-6 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest"
       },
       buttonsStyling: false
     });
 
+    // --- ALERT ELIMINAR (CORREGIDO) ---
     const result = await swalEstilo.fire({
-      title: "¿Eliminar invitado?",
+      title: '<span style="font-family: serif; font-style: italic; font-size: 1.5rem;">¿Eliminar invitado?</span>',
       text: "Esta acción no se puede deshacer",
       icon: "warning",
+      iconColor: "#f43f5e",
       showCancelButton: true,
       confirmButtonText: "Sí, eliminar",
       cancelButtonText: "Cancelar",
@@ -103,7 +122,8 @@ export default function GestionInvitados() {
             title: "Eliminado",
             text: "El invitado ha sido quitado de la lista.",
             icon: "success",
-            confirmButtonColor: "#18181b"
+            timer: 1500,
+            showConfirmButton: false
           });
         }
       } catch (error) {
@@ -134,8 +154,6 @@ export default function GestionInvitados() {
 
   return (
     <div className="space-y-8 pb-20">
-      
-      {/* HEADER Y STATS */}
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-serif italic font-bold text-zinc-900">Gestión de Invitados</h1>
@@ -150,36 +168,43 @@ export default function GestionInvitados() {
         </div>
       </div>
 
-      {/* FORMULARIO DE ALTA */}
       <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-zinc-100">
-        <form onSubmit={handleGuardar} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div className="space-y-2">
+        <form onSubmit={handleGuardar} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+          <div className="md:col-span-2 space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Familia / Apellido</label>
             <input 
               type="text" value={apellido} onChange={(e) => setApellido(e.target.value)}
               placeholder="Ej: Familia Garcia"
-              className="w-full bg-zinc-50 border-none rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-black transition-all font-bold text-zinc-800 placeholder:text-zinc-300"
+              className="w-full bg-zinc-50 border-none rounded-2xl py-3.5 px-4 outline-none focus:ring-2 focus:ring-black transition-all font-bold text-zinc-800 placeholder:text-zinc-300"
             />
           </div>
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 ml-1">Cupos</label>
             <select 
               value={cupos} onChange={(e) => setCupos(parseInt(e.target.value))}
-              className="w-full bg-zinc-50 border-none rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-black font-bold text-zinc-800 cursor-pointer appearance-none"
+              className="w-full bg-zinc-50 border-none rounded-2xl py-3.5 px-4 outline-none focus:ring-2 focus:ring-black font-bold text-zinc-800 cursor-pointer appearance-none"
             >
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <option key={n} value={n}>{n} {n === 1 ? 'Persona' : 'Personas'}</option>)}
             </select>
           </div>
-          <button 
-            type="submit" disabled={cargando || !apellido}
-            className="w-full bg-zinc-900 hover:bg-black text-white py-3.5 rounded-2xl font-black text-[10px] tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50 active:scale-95"
-          >
-            {cargando ? <Loader2 className="animate-spin" size={16} /> : <TicketPlus size={16} />} Generar Pase
-          </button>
+          <div className="flex gap-2">
+             <button 
+                type="submit" disabled={cargando || !apellido}
+                className="flex-[3] bg-zinc-900 hover:bg-black text-white py-3.5 rounded-2xl font-black text-[10px] tracking-[0.2em] uppercase transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50 active:scale-95"
+              >
+                {cargando ? <Loader2 className="animate-spin" size={16} /> : <TicketPlus size={16} />} Generar
+              </button>
+              <button 
+                type="button"
+                onClick={handleClearForm}
+                className="flex-1 bg-zinc-100 text-zinc-400 hover:text-rose-500 rounded-2xl flex items-center justify-center transition-colors"
+              >
+                <Trash2 size={18} />
+              </button>
+          </div>
         </form>
       </div>
 
-      {/* TABLA / LISTADO */}
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-zinc-100 overflow-hidden">
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -223,10 +248,10 @@ export default function GestionInvitados() {
           </table>
         </div>
 
-        {/* Mobile Cards */}
+        {/* Vista Mobile */}
         <div className="md:hidden divide-y divide-zinc-100">
           {listaInvitados.length === 0 ? (
-             <div className="p-10 text-center text-zinc-300 italic">No hay invitados registrados.</div>
+              <div className="p-10 text-center text-zinc-300 italic">No hay invitados registrados.</div>
           ) : (
             listaInvitados.map((inv) => (
               <div key={inv.id} className="p-6 space-y-4">

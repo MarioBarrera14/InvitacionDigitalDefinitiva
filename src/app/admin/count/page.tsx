@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, Calendar, Clock, RefreshCw, User, MapPin, Link as LinkIcon, Home, Loader2 } from "lucide-react";
+import { Save, Calendar, Clock, RefreshCw, User, MapPin, Link as LinkIcon, Home, Loader2, Trash2 } from "lucide-react";
 import { getEventConfig, updateEventConfig } from "@/app/api/admin/count/route";
+
+// --- IMPORTACIÓN DE SWEETALERT2 ---
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 interface TimeLeft {
   days: number; hours: number; mins: number; secs: number;
@@ -24,14 +30,57 @@ export default function CountConfigPage() {
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, mins: 0, secs: 0 });
 
-  // 1. CARGAR DATOS DE LA BASE DE DATOS (Corregido para leer eventName)
+  // Utilidad de Alerta Estilizada
+  const showNotification = (title: string, text: string, icon: 'success' | 'error') => {
+    MySwal.fire({
+      title: <span className="font-serif italic text-2xl">{title}</span>,
+      html: <p className="text-zinc-500 text-sm">{text}</p>,
+      icon: icon,
+      iconColor: icon === 'success' ? '#10b981' : '#ef4444',
+      confirmButtonText: 'ENTENDIDO',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-[2rem] bg-white border border-zinc-100 shadow-2xl',
+        confirmButton: 'bg-zinc-900 text-white px-8 py-3 rounded-full font-bold text-xs hover:scale-105 transition-all outline-none mt-4',
+      }
+    });
+  };
+
+  // --- FUNCIÓN PARA LIMPIAR TODO ---
+  const handleClear = () => {
+    MySwal.fire({
+      title: <span className="font-serif italic text-2xl">¿Limpiar campos?</span>,
+      text: "Se borrarán los textos escritos en el formulario.",
+      icon: 'warning',
+      iconColor: '#f59e0b',
+      showCancelButton: true,
+      confirmButtonText: 'SÍ, LIMPIAR',
+      cancelButtonText: 'CANCELAR',
+      buttonsStyling: false,
+      customClass: {
+        popup: 'rounded-[2rem] bg-white border border-zinc-100 shadow-2xl',
+        confirmButton: 'bg-red-500 text-white px-8 py-3 rounded-full font-bold text-xs hover:scale-105 transition-all outline-none mx-2',
+        cancelButton: 'bg-zinc-200 text-zinc-600 px-8 py-3 rounded-full font-bold text-xs hover:scale-105 transition-all outline-none mx-2',
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setEventName("");
+        setEventDate("");
+        setEventTime("");
+        setVenueName("");
+        setVenueAddress("");
+        setMapLink("");
+      }
+    });
+  };
+
+  // 1. CARGAR DATOS DE LA BASE DE DATOS
   useEffect(() => {
     async function fetchData() {
       const config = await getEventConfig();
       if (config) {
         setEventDate(config.eventDate);
         setEventTime(config.eventTime);
-        // Cambiamos config.nombre por config.eventName para coincidir con tu Prisma
         setEventName(config.eventName || "Luz Jazmín"); 
         setVenueName(config.venueName);
         setVenueAddress(config.venueAddress);
@@ -63,11 +112,11 @@ export default function CountConfigPage() {
     return () => clearInterval(timer);
   }, [eventDate, eventTime]);
 
-  // 3. GUARDAR EN LA BASE DE DATOS (Corregido para enviar eventName)
+  // 3. GUARDAR EN LA BASE DE DATOS
   const handleSave = async () => {
     setIsSaving(true);
     const result = await updateEventConfig({
-      eventName: eventName,    // <--- CAMBIO CLAVE: Enviamos como 'eventName'
+      eventName: eventName,
       eventDate,
       eventTime,
       venueName,
@@ -76,9 +125,9 @@ export default function CountConfigPage() {
     });
 
     if (result.success) {
-      alert("¡Configuración guardada en la base de datos! 🎉");
+      showNotification("¡Éxito!", "Configuración guardada en la base de datos 🎉", "success");
     } else {
-      alert("Error al guardar. Verifica la consola.");
+      showNotification("¡Ups!", "Error al guardar. Verifica la consola.", "error");
     }
     setIsSaving(false);
   };
@@ -148,27 +197,38 @@ export default function CountConfigPage() {
             </div>
           </div>
 
-          <button 
-            onClick={handleSave} 
-            disabled={isSaving}
-            className="w-full bg-zinc-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.01] transition-all shadow-lg disabled:opacity-50"
-          >
-            {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-            {isSaving ? "GUARDANDO..." : "GUARDAR EN BASE DE DATOS"}
-          </button>
+          {/* --- CONTENEDOR DE BOTONES --- */}
+          <div className="flex gap-3 mt-2">
+            <button 
+              onClick={handleSave} 
+              disabled={isSaving}
+              className="flex-[3] bg-zinc-900 dark:bg-white text-white dark:text-black py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.01] transition-all shadow-lg disabled:opacity-50"
+            >
+              {isSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
+              {isSaving ? "GUARDANDO..." : "GUARDAR EN BASE DE DATOS"}
+            </button>
+
+            <button 
+              onClick={handleClear}
+              title="Limpiar campos"
+              className="flex-1 bg-zinc-100 dark:bg-slate-800 text-zinc-400 hover:text-red-500 py-4 rounded-2xl font-bold flex items-center justify-center transition-all hover:bg-red-50 dark:hover:bg-red-950/30"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
+          </div>
         </motion.div>
 
         {/* Vista Previa */}
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="lg:col-span-2 space-y-6">
           <div className="bg-white p-10 rounded-3xl border border-zinc-100 shadow-xl flex flex-col items-center text-center space-y-6">
              <div className="space-y-1">
-                <h2 className="text-4xl font-serif italic text-zinc-800">{venueName}</h2>
+                <h2 className="text-4xl font-serif italic text-zinc-800">{venueName || "Nombre del Salón"}</h2>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-semibold">LA CELEBRACIÓN</p>
              </div>
              <div className="flex items-center gap-4 text-4xl font-serif italic font-bold text-zinc-900">
-                {eventTime} HS
+                {eventTime || "00:00"} HS
              </div>
-             <p className="text-zinc-500 font-medium tracking-wide">{venueAddress}</p>
+             <p className="text-zinc-500 font-medium tracking-wide">{venueAddress || "Dirección del evento"}</p>
           </div>
 
           <div className="bg-zinc-900 text-white p-8 rounded-3xl flex flex-col items-center gap-6">
@@ -181,7 +241,7 @@ export default function CountConfigPage() {
                 ))}
              </div>
              <div className="w-full border-t border-white/10 pt-4 text-center">
-                <p className="text-xl font-serif italic">{eventName}</p>
+                <p className="text-xl font-serif italic">{eventName || "Nombre"}</p>
              </div>
           </div>
         </motion.div>

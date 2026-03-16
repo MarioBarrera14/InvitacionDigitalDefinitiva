@@ -61,7 +61,7 @@ export default function LoginPage() {
         <div className="mt-6 sm:mt-8 text-center">
           <p className="text-zinc-500 text-[11px] sm:text-xs">
             ¿No tienes cuenta?{" "}
-            <Link href="/admin/users/new" className="text-pink-400 hover:underline font-medium">
+            <Link href="/users/new" className="text-pink-400 hover:underline font-medium">
               Regístrate aquí
             </Link>
           </p>
